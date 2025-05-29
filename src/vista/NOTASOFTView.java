@@ -73,9 +73,33 @@ private void cargarFXML() {
         configurarDragAndDrop();
         
         // Configurar eventos de la barra de progreso
-        configurarBarraProgreso();
     }
+/**
+ * Aplica un efecto visual temporal a un botón: 
+ * - Cambia a gris al pulsarlo
+ * - Vuelve al estilo original al soltarlo o salir con el ratón
+ */
+public void aplicarEfectoBoton(Button boton) {
+    if (boton == null) return;
 
+    // Guardamos el estilo original del botón
+    String estiloOriginal = "-fx-background-color: transparent;";
+
+    // Cambiar a gris al presionar
+    boton.setOnMousePressed(e -> {
+        boton.setStyle("-fx-background-color: #cccccc;");
+    });
+
+    // Volver al estilo original al soltar
+    boton.setOnMouseReleased(e -> {
+        boton.setStyle(estiloOriginal);
+    });
+
+    // Opcional: también restaurar estilo si el mouse sale del botón sin soltarse
+    boton.setOnMouseExited(e -> {
+        boton.setStyle(estiloOriginal);
+    });
+}
     private void configurarDragAndDrop() {
         tablaCanciones.setRowFactory(tv -> {
             TableRow<Cancion> row = new TableRow<>();
@@ -129,21 +153,7 @@ private void cargarFXML() {
         });
     }
 
-    private void configurarBarraProgreso() {
-        barraProgreso.setOnMouseEntered(e -> {
-            barraProgreso.setStyle("-fx-accent: #1976D2; " +
-                    "-fx-control-inner-background: #E0E0E0; " +
-                    "-fx-pref-height: 12px; " +
-                    "-fx-cursor: hand;");
-        });
 
-        barraProgreso.setOnMouseExited(e -> {
-            barraProgreso.setStyle("-fx-accent: #2196F3; " +
-                    "-fx-control-inner-background: #E0E0E0; " +
-                    "-fx-pref-height: 10px; " +
-                    "-fx-cursor: hand;");
-        });
-    }
 
     private void configurarEscena() {
         Scene scene = new Scene(root);

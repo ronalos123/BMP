@@ -116,14 +116,13 @@ public class Reproductor {
     /**
      * Reinicia completamente los tiempos
      */
-    public void reiniciarTiempos() {
-        tiempoTranscurrido.set("00:00");
-        if (mediaPlayer != null && mediaPlayer.getTotalDuration() != null) {
-            tiempoTotal.set(formatearTiempo(mediaPlayer.getTotalDuration()));
-        } else {
-            tiempoTotal.set("00:00");
-        }
-    }
+/**
+ * Reinicia los tiempos mostrados en la interfaz
+ */
+public void reiniciarTiempos() {
+    tiempoTranscurrido.set("00:00");
+    tiempoTotal.set("00:00");
+}
     
     /* ***********************
      * PROPIEDADES PARA LA UI
@@ -220,29 +219,35 @@ public class Reproductor {
     /**
      * Reanuda la reproducción pausada.
      */
-    public void reanudar() {
-        if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PAUSED) {
+public void reanudar() {
+    if (mediaPlayer != null) {
+        if (mediaPlayer.getStatus() == MediaPlayer.Status.PAUSED) {
+            mediaPlayer.play();
+            timelineTemporizador.play();
+        } else if (mediaPlayer.getStatus() == MediaPlayer.Status.STOPPED || mediaPlayer.getStatus() == MediaPlayer.Status.READY) {
+            // Si se detuvo pero queremos reanudar, empezamos desde la posición guardada
+            mediaPlayer.seek(Duration.millis(mediaPlayer.getCurrentTime().toMillis()));
             mediaPlayer.play();
             timelineTemporizador.play();
         }
     }
+}
 
-    /**
-     * Detiene completamente la reproducción y libera recursos.
-     */
-    public void detener() {
-        if (mediaPlayer != null) {
-            timelineTemporizador.stop();
-            mediaPlayer.stop();
-            mediaPlayer.dispose();
-            mediaPlayer = null;
-            rutaActual = null;
-            tiempoTranscurrido.set("00:00");
-            tiempoTotal.set("00:00");
-        }
+/**
+ * Detiene la reproducción y limpia todos los recursos
+ */
+public void detener() {
+    if (mediaPlayer != null) {
+        timelineTemporizador.stop();
+        mediaPlayer.stop();
+        mediaPlayer.dispose();
+        mediaPlayer = null;
+        rutaActual = null;
+        tiempoTranscurrido.set("00:00");
+        tiempoTotal.set("00:00");
     }
-    
-    /**
+}
+/**
      * hace que el media se reinicie util para mejorar la optimizacion
      */
     public void reiniciarReproduccion() {
