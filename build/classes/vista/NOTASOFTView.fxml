@@ -27,7 +27,7 @@
                      </tooltip></ComboBox>
                       <Button fx:id="btnNuevaLista" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                      <tooltip>
-                        <Tooltip text="Crea una nueva lista" textAlignment="JUSTIFY" />
+                        <Tooltip text="Crear una lista nueva" textAlignment="JUSTIFY" />
                      </tooltip>
                      <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
@@ -169,6 +169,10 @@
                   <Image url="@../resources/imagenes/disco-de-musica-con-nota-musical.png" />
                </image>
             </ImageView>
+            <Label fx:id="NombrePresentacion" alignment="CENTER" prefHeight="17.0" prefWidth="468.0" textAlignment="JUSTIFY">
+               <font>
+                  <Font size="16.0" />
+               </font></Label>
             </children>
          <opaqueInsets>
             <Insets />
@@ -281,7 +285,7 @@
                               <Image url="@../resources/imagenes/Sonido.png" />
                            </image>
                         </ImageView>
-                            <Slider fx:id="sliderVolumen" blockIncrement="0.1" cache="true" majorTickUnit="0.5" max="1.0" maxHeight="30.0" maxWidth="120.0" min="0" minHeight="30.0" minWidth="120.0" minorTickCount="10" prefHeight="30.0" prefWidth="120.0" showTickLabels="true" showTickMarks="true" style="-fx-background-color: ;" value="1.0" />
+                            <Slider fx:id="sliderVolumen" blockIncrement="0.1" cache="true" majorTickUnit="0.5" max="1.0" maxHeight="30.0" maxWidth="120.0" min="0" minHeight="30.0" minWidth="120.0" minorTickCount="10" prefHeight="30.0" prefWidth="120.0" showTickLabels="true" showTickMarks="true" value="1.0" />
                      </children>
                   </HBox>
                </children>

@@ -11,6 +11,7 @@ import modelo.Cancion;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Optional;
 import javafx.collections.ObservableList;
 
 import javafx.scene.input.ClipboardContent;
@@ -43,11 +44,11 @@ public class NOTASOFTView {
     @FXML private Button btnAnterior;
     @FXML private Button btnAleatorio;
     @FXML private Button btnInvertir;
+    @FXML private Label NombrePresentacion;
     //angelo
     @FXML private Button btnClasificar;
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
-
     public NOTASOFTView(Stage primaryStage) {
         this.primaryStage = primaryStage;
         cargarFXML();
@@ -188,6 +189,7 @@ public void aplicarEfectoBoton(Button boton) {
     public Button getBtnInvertir() { return btnInvertir; }
     public ToggleButton getBtnRepetirUna() { return btnRepetirUna; }
     public Button getClasificar () {return btnClasificar;}
+    public Label getNombrePresentacion() { return NombrePresentacion;}
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");
@@ -195,7 +197,15 @@ public void aplicarEfectoBoton(Button boton) {
         alerta.setContentText(mensaje);
         alerta.showAndWait();
     }
+public boolean mostrarConfirmacion(String mensaje) {
+    Alert alerta = new Alert(Alert.AlertType.CONFIRMATION);
+    alerta.setTitle("Confirmación");
+    alerta.setHeaderText("¿Estás seguro?");
+    alerta.setContentText(mensaje);
 
+    Optional<ButtonType> resultado = alerta.showAndWait();
+    return resultado.isPresent() && resultado.get() == ButtonType.OK;
+}
     public boolean BarraProgresoPresionado() {
         return barraProgreso.isPressed();
     }

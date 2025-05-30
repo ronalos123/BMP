@@ -235,9 +235,12 @@ private SesionGuardada sesionGuardada;
     /**
      * Elimina la lista actualmente seleccionada
      */
-    private void eliminarListaActual() {
-        String nombre = vista.getSelectorDeListas().getValue();
-        if (nombre != null) {
+private void eliminarListaActual() {
+    String nombre = vista.getSelectorDeListas().getValue();
+    if (nombre != null) {
+        boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la lista: " + nombre + "? Esta acción no se puede deshacer.");
+
+        if (confirmado) {
             gestor.eliminarLista(nombre);
             vista.getSelectorDeListas().getItems().remove(nombre);
             vista.getTablaCanciones().getItems().clear();
@@ -250,8 +253,11 @@ private SesionGuardada sesionGuardada;
             } else {
                 vista.mostrarAlerta("Ya no hay listas");
             }
+        } else {
+            vista.mostrarAlerta("Eliminación cancelada.");
         }
     }
+}
     
     /**
      * Reordena la lista de reproducción según el nuevo orden en la tabla
@@ -376,18 +382,16 @@ private void reproducirCancionSeleccionada() {
         vista.mostrarAlerta("No hay lista seleccionada");
         return;
     }
-
     Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
     if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
         vista.getTablaCanciones().getSelectionModel().select(0);
         seleccionada = vista.getTablaCanciones().getItems().get(0);
     }
-
     if (seleccionada != null) {
         try {
             // Si ya había un reproductor activo, lo detenemos
             reproductor.detener();
-
+            vista.getNombrePresentacion().setText(seleccionada.getNombre());
             // Reiniciamos el Timeline si es necesario
             inicializarTimelineSiNecesario();
 
@@ -551,32 +555,51 @@ private void eliminarCancion() {
     Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
 
     if (nombreLista != null && seleccionada != null) {
-        ListaReproduccion lista = gestor.getLista(nombreLista);
+        boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la canción: " + seleccionada.getNombre() + "?");
 
-        // Verificar si la canción que vamos a eliminar es la que está sonando
+        if (!confirmado) {
+            vista.mostrarAlerta("Eliminación cancelada.");
+            return;
+        }
+
+        ListaReproduccion lista = gestor.getLista(nombreLista);
+        ObservableList<Cancion> canciones = vista.getTablaCanciones().getItems();
+        int indiceActual = canciones.indexOf(seleccionada);
+
         boolean esLaCancionActual = false;
 
         if (reproductor.getMediaPlayer() != null) {
             String rutaReproductor = reproductor.getMediaPlayer().getMedia().getSource();
             String rutaCancionSeleccionada = new File(seleccionada.getRuta()).toURI().toString();
-
-            // Compara las rutas absolutas
             esLaCancionActual = rutaReproductor.equals(rutaCancionSeleccionada);
         }
 
-        // Eliminar la canción de la lista
         if (lista.eliminarCancion(seleccionada.getNombre())) {
-            vista.getTablaCanciones().getItems().remove(seleccionada);
+            canciones.remove(seleccionada);
+            vista.getNombrePresentacion().setText("");
             listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
             buscarCancion();
 
-            // Si era la canción actual, detenerla inmediatamente
             if (esLaCancionActual) {
-                reproductor.detener(); // Detiene y limpia recursos
+                reproductor.detener();
                 vista.getBarraProgreso().setProgress(0);
                 vista.getTiempoTranscurridoLabel().setText("00:00");
                 vista.getTiempoTotalLabel().setText("00:00");
+                
+                // Reproducir la siguiente canción si existe
+                if (!canciones.isEmpty()) {
+                    // Si el índice eliminado está dentro del rango, reproducir la que sigue
+                    if (indiceActual >= canciones.size()) {
+                        indiceActual = canciones.size() - 1; // en caso de que se haya eliminado la última
+                    }
+
+                    Cancion siguiente = canciones.get(indiceActual);
+                    vista.getTablaCanciones().getSelectionModel().select(siguiente);
+                        reproducirCancionSeleccionada();
+                    
+                }
             }
+
         } else {
             vista.mostrarAlerta("No se pudo eliminar la canción.");
         }
@@ -584,6 +607,8 @@ private void eliminarCancion() {
         vista.mostrarAlerta("Por favor, selecciona una canción para eliminar.");
     }
 }
+
+
 
     /**
      * Activa/desactiva el modo de repetición para la canción actual
@@ -780,7 +805,7 @@ if (vista.getTablaCanciones().getSelectionModel().getSelectedItem() != null) {
     Cancion cancion = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
 
     reproductor.reproducir(cancion.getRuta());
-
+    vista.getNombrePresentacion().setText(cancion.getNombre());
     // Esperar a que el MediaPlayer esté listo para configurar la posición
     if (reproductor.getMediaPlayer() != null) {
         reproductor.getMediaPlayer().setOnReady(() -> {

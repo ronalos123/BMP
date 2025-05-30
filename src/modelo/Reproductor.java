@@ -165,14 +165,14 @@ public void reiniciarTiempos() {
             mediaPlayer = new MediaPlayer(archivoAudio);
             rutaActual = rutaCancion;
 
-            // Configurar el modo de repetición
-            mediaPlayer.setCycleCount(repetirUna ? MediaPlayer.INDEFINITE : 1);
 
             mediaPlayer.setVolume(volumenProperty.get());
 
             mediaPlayer.setOnReady(() -> {
                 tiempoTranscurrido.set("00:00");
+                System.out.println(mediaPlayer.getTotalDuration());
                 tiempoTotal.set(formatearTiempo(mediaPlayer.getTotalDuration()));
+                System.out.println(tiempoTotal);
                 timelineTemporizador.play();
                 mediaPlayer.play();
             });
@@ -185,6 +185,8 @@ public void reiniciarTiempos() {
                         if (onEndOfMediaHandler != null) {
                             onEndOfMediaHandler.run();
                         }
+                    }else{
+                        reiniciarReproduccion();
                     }
                 });
             });
