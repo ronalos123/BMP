@@ -377,4 +377,11 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         }
         cabeza = previo;
     }
+    
+    //anghelo
+      private List<Cancion> canciones;
+
+public List<Cancion> getCanciones() {
+    return canciones;
+}
 }

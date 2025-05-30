@@ -43,6 +43,8 @@ public class NOTASOFTView {
     @FXML private Button btnAnterior;
     @FXML private Button btnAleatorio;
     @FXML private Button btnInvertir;
+    //angelo
+    @FXML private Button btnClasificar;
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
 
@@ -185,7 +187,7 @@ public void aplicarEfectoBoton(Button boton) {
     public Label getTiempoTotalLabel() { return tiempoTotalLabel; }
     public Button getBtnInvertir() { return btnInvertir; }
     public ToggleButton getBtnRepetirUna() { return btnRepetirUna; }
-    
+    public Button getClasificar () {return btnClasificar;}
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");

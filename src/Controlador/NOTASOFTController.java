@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import javafx.animation.Animation;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
@@ -130,11 +131,24 @@ private SesionGuardada sesionGuardada;
         vista.getBtnAnterior().setOnAction(e -> anteriorCancion());
         vista.getBtnAleatorio().setOnAction(e -> reproducirAleatoria());
         vista.getBtnRepetirUna().setOnAction(e -> repetirUna());
-vista.aplicarEfectoBoton(vista.getBtnAnterior());
-vista.aplicarEfectoBoton(vista.getBtnSiguiente());
-vista.aplicarEfectoBoton(vista.getBtnReproducir());
-vista.aplicarEfectoBoton(vista.getBtnPausa());
-vista.aplicarEfectoBoton(vista.getBtnReanudar());
+        //angelo
+        vista.getClasificar().setOnAction(e -> {
+            Stage stage = (Stage) vista.getClasificar().getScene().getWindow();
+            clasificarCancionPorMetadatos(stage);
+        });
+        vista.aplicarEfectoBoton(vista.getBtnAnterior());
+        vista.aplicarEfectoBoton(vista.getBtnSiguiente());
+        vista.aplicarEfectoBoton(vista.getBtnReproducir());
+        vista.aplicarEfectoBoton(vista.getBtnPausa());
+        vista.aplicarEfectoBoton(vista.getBtnReanudar());
+                vista.aplicarEfectoBoton(vista.getBtnEliminar());
+                vista.aplicarEfectoBoton(vista.getBtnAleatorio());
+                vista.aplicarEfectoBoton(vista.getBtnAgregarCancion());
+                vista.aplicarEfectoBoton(vista.getBtnAgregarCarpeta());
+                vista.aplicarEfectoBoton(vista.getClasificar());
+                vista.aplicarEfectoBoton(vista.getBtnNuevaLista());
+                vista.aplicarEfectoBoton(vista.getBtnEliminarLista());
+                vista.aplicarEfectoBoton(vista.getBtnInvertir());
         //Configurar bucle de repeticion
         vista.getBtnRepetirUna().selectedProperty().addListener((obs, oldVal, newVal) -> {
             actualizarEstiloBotonRepetir(newVal);
@@ -596,8 +610,8 @@ private void eliminarCancion() {
      */
     private void actualizarEstiloBotonRepetir(boolean activado) {
         String estilo = activado
-                ? "-fx-background-color: #4CAF50; -fx-text-fill: white;"
-                : "-fx-background-color: #9E9E9E; -fx-text-fill: white;";
+                ? "-fx-background-color: #cccccc; -fx-text-fill: white;"
+                : "-fx-background-color: transparent; -fx-text-fill: white;";
         vista.getBtnRepetirUna().setStyle(estilo);
     }
 
@@ -786,4 +800,75 @@ if (vista.getTablaCanciones().getSelectionModel().getSelectedItem() != null) {
         System.out.println("No hay sesión guardada o error al cargar: " + e.getMessage());
     }
 }
+//Anghelo
+public void clasificarCancionPorMetadatos(Stage stage) {
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Seleccionar canciones para clasificar");
+    fileChooser.getExtensionFilters().addAll(
+        new FileChooser.ExtensionFilter("Archivos de Audio", "*.mp3", "*.m4a", "*.wav")
+    );
+
+    List<File> archivos = fileChooser.showOpenMultipleDialog(stage);
+    if (archivos == null || archivos.isEmpty()) return;
+
+    for (File archivo : archivos) {
+        try {
+            javafx.scene.media.Media media = new javafx.scene.media.Media(archivo.toURI().toString());
+
+            final boolean[] procesado = {false};  // bandera para evitar múltiples ejecuciones
+
+            media.getMetadata().addListener((MapChangeListener<String, Object>) cambio -> {
+                if (cambio.wasAdded() && !procesado[0]) {
+                    procesado[0] = true;
+
+                    Platform.runLater(() -> {
+                        String titulo = (String) media.getMetadata().get("title");
+                        String artista = (String) media.getMetadata().get("artist");
+                        String genero = (String) media.getMetadata().get("genre");
+
+                        String nombreLista = (genero != null && !genero.trim().isEmpty()) ? genero : artista;
+                        if (nombreLista == null || nombreLista.trim().isEmpty()) {
+                            nombreLista = "Desconocido";
+                        }
+
+                        boolean esNuevaLista = false;
+
+                        if (!gestor.existeLista(nombreLista)) {
+                            gestor.crearLista(nombreLista);
+                            vista.getSelectorDeListas().getItems().add(nombreLista);
+                            esNuevaLista = true;
+                        }
+
+                        if (!gestor.existeCancionEnLista(nombreLista, archivo.getAbsolutePath())) {
+                            gestor.agregarCancionALista(
+                                nombreLista,
+                                (titulo != null ? titulo : archivo.getName()),
+                                archivo.getAbsolutePath()
+                            );
+
+                            if (nombreLista.equals(vista.getSelectorDeListas().getValue())) {
+                                String duracion = gestor.getLista(nombreLista).obtenerDuracionLegible(archivo.getAbsolutePath());
+                                vista.getTablaCanciones().getItems().add(
+                                    new Cancion(
+                                        (titulo != null ? titulo : archivo.getName()),
+                                        duracion,
+                                        archivo.getAbsolutePath()
+                                    )
+                                );
+                            }
+                        }
+
+                        if (esNuevaLista) {
+                            vista.mostrarAlerta("Se creó la lista: " + nombreLista + " y se agregó la canción.");
+                        }
+                    });
+                }
+            });
+
+        } catch (Exception e) {
+            vista.mostrarAlerta("Error al leer metadatos de: " + archivo.getName() + "\n" + e.getMessage());
+        }
+    }
+}
+
 }

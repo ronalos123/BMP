@@ -197,4 +197,19 @@ public class GestorDeListas implements Serializable {
             System.out.println("Error al cargar las listas: " + e.getMessage());
         }
     }
+    
+    
+    //Anghelo
+    public boolean existeCancionEnLista(String nombreLista, String ruta) {
+    ListaReproduccion lista = listas.get(nombreLista);
+    if (lista == null) return false;
+
+    List<Cancion> canciones = lista.getCanciones();
+    if (canciones == null) return false;
+
+    return canciones.stream().anyMatch(c ->
+        c != null && c.getRuta() != null && c.getRuta().equals(ruta)
+    );
+}
+
 }

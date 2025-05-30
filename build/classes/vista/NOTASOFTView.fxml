@@ -17,17 +17,51 @@
       <HBox alignment="CENTER" prefHeight="137.0" prefWidth="1076.0" />
 
         <!-- Gestión de listas -->
-        <HBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="31.0" prefWidth="808.0" spacing="400.0">
+        <HBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="31.0" prefWidth="808.0" spacing="350.0">
             <children>
-            <HBox prefHeight="31.0" prefWidth="356.0" spacing="10.0">
+            <HBox prefHeight="31.0" prefWidth="518.0" spacing="10.0">
                <children>
-                      <ComboBox fx:id="selectorDeListas" promptText="Seleccionar lista" style="-fx-background-color: #a4d7f4;" />
-                      <Button fx:id="btnNuevaLista" style="-fx-background-color: #9be3f1;" text="➕ Nueva Lista" />
-                      <Button fx:id="btnEliminarLista" style="-fx-background-color: #90afd4;" text="🗑 Eliminar Lista" />
+                      <ComboBox fx:id="selectorDeListas" promptText="Seleccionar lista" style="-fx-background-color: #a4d7f4;">
+                     <tooltip>
+                        <Tooltip text="Seleciona una lista de las que ya existen" textAlignment="JUSTIFY" />
+                     </tooltip></ComboBox>
+                      <Button fx:id="btnNuevaLista" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                     <tooltip>
+                        <Tooltip text="Crea una nueva lista" textAlignment="JUSTIFY" />
+                     </tooltip>
+                     <graphic>
+                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/NuevaLista.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
+                      <Button fx:id="btnEliminarLista" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: Transparent;">
+                     <tooltip>
+                        <Tooltip text="Elimina la lista seleccionada o la que esta en reproduccion" textAlignment="JUSTIFY" />
+                     </tooltip>
+                     <graphic>
+                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/Eliminarlista.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
                </children>
             </HBox>
             <HBox alignment="TOP_CENTER" prefHeight="46.0" prefWidth="73.0" spacing="5.0">
                <children>
+                  <Button fx:id="btnClasificar" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/Burbuja.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Listas inteligentes: Selecciona una o mas canciones desde el escritorio y BMP creara listas segun su genero" textAlignment="JUSTIFY" />
+                     </tooltip></Button>
                       <Button fx:id="btnAgregarCarpeta" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                      <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
@@ -36,6 +70,9 @@
                            </image>
                         </ImageView>
                      </graphic>
+                     <tooltip>
+                        <Tooltip text="Agrega carpetas completas desde el escritorioque contengan archivos de audio" textAlignment="JUSTIFY" />
+                     </tooltip>
                   </Button>
                       <Button fx:id="btnAgregarCancion" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;" textAlignment="JUSTIFY" textFill="#c9c9c9">
                      <graphic>
@@ -45,6 +82,9 @@
                            </image>
                         </ImageView>
                      </graphic>
+                     <tooltip>
+                        <Tooltip text="Agrega una cancion desde el escritorio" textAlignment="JUSTIFY" />
+                     </tooltip>
                   </Button>
                </children>
             </HBox>
@@ -70,11 +110,21 @@
                                   <String fx:value="Ordenar por Duración" />
                               </FXCollections>
                           </items>
+                     <tooltip>
+                        <Tooltip text="Selecciona y se hara un sorting segun la modalidad de ordenamiento elejida" textAlignment="JUSTIFY" />
+                     </tooltip>
                       </ComboBox>
-                      <Button fx:id="btnInvertir" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: #90afd4; -fx-font-size: 14px;" text="⇅">
+                      <Button fx:id="btnInvertir" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                           <tooltip>
-                              <Tooltip text="Invertir el orden actual de la lista" />
+                              <Tooltip text="Invertir el orden actual de la lista" textAlignment="JUSTIFY" />
                           </tooltip>
+                     <graphic>
+                        <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/Invertir.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
                       </Button>
                </children>
             </HBox>
@@ -124,7 +174,7 @@
             <Insets />
          </opaqueInsets>
         </HBox>
-      <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="67.0" prefWidth="533.0">
+      <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="67.0" prefWidth="533.0" spacing="5.0">
          <children>
             <HBox alignment="CENTER" prefHeight="67.0" prefWidth="250.0" spacing="20.0">
                <children>
@@ -197,7 +247,10 @@
                               <Image url="@../resources/imagenes/aleatorio.png" />
                            </image>
                         </ImageView>
-                     </graphic></Button>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Reproducira una cancion aleatoria de la lista en reproduccion" textAlignment="JUSTIFY" />
+                     </tooltip></Button>
                       <Button fx:id="btnEliminar" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                      <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
@@ -205,10 +258,13 @@
                               <Image url="@../resources/imagenes/Eliminar.png" />
                            </image>
                         </ImageView>
-                     </graphic></Button>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Eliminar la cancion seleccionada o en reproduccion" />
+                     </tooltip></Button>
                       <ToggleButton fx:id="btnRepetirUna" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                           <tooltip>
-                              <Tooltip text="Repetir canción actual" />
+                              <Tooltip text="modoRepetir cancion" />
                           </tooltip>
                      <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
@@ -225,7 +281,7 @@
                               <Image url="@../resources/imagenes/Sonido.png" />
                            </image>
                         </ImageView>
-                            <Slider fx:id="sliderVolumen" blockIncrement="0.1" cache="true" majorTickUnit="0.5" max="1.0" min="0" minorTickCount="10" prefWidth="100.0" showTickLabels="true" showTickMarks="true" style="-fx-background-color: ;" value="1.0" />
+                            <Slider fx:id="sliderVolumen" blockIncrement="0.1" cache="true" majorTickUnit="0.5" max="1.0" maxHeight="30.0" maxWidth="120.0" min="0" minHeight="30.0" minWidth="120.0" minorTickCount="10" prefHeight="30.0" prefWidth="120.0" showTickLabels="true" showTickMarks="true" style="-fx-background-color: ;" value="1.0" />
                      </children>
                   </HBox>
                </children>
