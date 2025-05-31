@@ -24,6 +24,7 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.media.AudioClip;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -32,7 +33,7 @@ import modelo.SesionGuardada;
 import vista.NOTASOFTView;
 
 public class NOTASOFTController extends Application {
-
+private final AudioClip PopBurbuja = new AudioClip(getClass().getResource("/resources/sonidos/BurbujaPop.mp3").toExternalForm());
     // Componentes principales del controlador
     private GestorDeListas gestor;                              // Maneja las listas de reproducción
     private Reproductor reproductor;                            // Controla la reproducción de audio
@@ -939,6 +940,7 @@ public void favorito (){
     }
     if(vista.getBtnFavorito().isSelected()){
         System.out.println("esta pulsada");
+        PopBurbuja.play();
         gestor.agregarFav(seleccionada);
     }else{
         System.out.println("No esta pulsada");

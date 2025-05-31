@@ -47,7 +47,17 @@
                            </image>
                         </ImageView>
                      </graphic></Button>
-                  <Button fx:id="btnmostrarFavoritos" mnemonicParsing="false" text="Button" />
+                  <Button fx:id="btnmostrarFavoritos" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: Transparent;">
+                     <graphic>
+                        <ImageView fitHeight="30.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/ListaDeFavoritos.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Muestra la lista de Favoritos" />
+                     </tooltip></Button>
                </children>
             </HBox>
             <HBox alignment="TOP_CENTER" prefHeight="46.0" prefWidth="73.0" spacing="5.0">
@@ -174,7 +184,7 @@
                <font>
                   <Font size="16.0" />
                </font></Label>
-            <ToggleButton fx:id="btnFavorito" mnemonicParsing="false" text="ToggleButton" />
+            <ToggleButton fx:id="btnFavorito" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: Transparent;" />
             </children>
          <opaqueInsets>
             <Insets />

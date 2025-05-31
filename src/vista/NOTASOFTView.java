@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
 import javafx.collections.ObservableList;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
@@ -50,9 +52,24 @@ public class NOTASOFTView {
     //Greco-Xavier
     @FXML private Button btnmostrarFavoritos;
     @FXML private ToggleButton btnFavorito;
+    private final Image imgFavoritoTrue = new Image(getClass().getResource("/resources/imagenes/Favorite_True.png").toExternalForm());
+    private final Image imgFavoritoFalse = new Image(getClass().getResource("/resources/imagenes/Favorite_False.png").toExternalForm());
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
-    
+    @FXML
+public void initialize() {
+    // Imagen inicial
+    btnFavorito.setGraphic(new ImageView(imgFavoritoFalse));
+
+    // Escuchar cambio de estado
+    btnFavorito.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+        if (isSelected) {
+            btnFavorito.setGraphic(new ImageView(imgFavoritoTrue));
+        } else {
+            btnFavorito.setGraphic(new ImageView(imgFavoritoFalse));
+        }
+    });
+}
     public NOTASOFTView(Stage primaryStage) {
         this.primaryStage = primaryStage;
         cargarFXML();
