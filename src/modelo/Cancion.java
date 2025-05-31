@@ -16,7 +16,6 @@ public class Cancion {
     private final StringProperty nombre;
     private final StringProperty duracion;
     private final String ruta;
-
     public Cancion(String nombre, String duracion, String ruta) {
         this.nombre = new SimpleStringProperty(nombre);
         this.duracion = new SimpleStringProperty(duracion);
@@ -29,6 +28,6 @@ public class Cancion {
     
     public String getDuracion() { return duracion.get(); }
     public StringProperty duracionProperty() { return duracion; }
-    
     public String getRuta() { return ruta; }
+
 }

@@ -47,8 +47,12 @@ public class NOTASOFTView {
     @FXML private Label NombrePresentacion;
     //angelo
     @FXML private Button btnClasificar;
+    //Greco-Xavier
+    @FXML private Button btnmostrarFavoritos;
+    @FXML private ToggleButton btnFavorito;
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
+    
     public NOTASOFTView(Stage primaryStage) {
         this.primaryStage = primaryStage;
         cargarFXML();
@@ -188,8 +192,11 @@ public void aplicarEfectoBoton(Button boton) {
     public Label getTiempoTotalLabel() { return tiempoTotalLabel; }
     public Button getBtnInvertir() { return btnInvertir; }
     public ToggleButton getBtnRepetirUna() { return btnRepetirUna; }
+    public ToggleButton getBtnFavorito() { return btnFavorito; }
     public Button getClasificar () {return btnClasificar;}
     public Label getNombrePresentacion() { return NombrePresentacion;}
+    public Button getBtnmostrarFavoritos() { return btnmostrarFavoritos;}
+    
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");
@@ -209,4 +216,8 @@ public boolean mostrarConfirmacion(String mensaje) {
     public boolean BarraProgresoPresionado() {
         return barraProgreso.isPressed();
     }
+    @FXML
+public void ReproducirClick() {
+    getTablaCanciones().getSelectionModel().getSelectedItem();  
+}
 }

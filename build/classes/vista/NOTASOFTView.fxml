@@ -47,6 +47,7 @@
                            </image>
                         </ImageView>
                      </graphic></Button>
+                  <Button fx:id="btnmostrarFavoritos" mnemonicParsing="false" text="Button" />
                </children>
             </HBox>
             <HBox alignment="TOP_CENTER" prefHeight="46.0" prefWidth="73.0" spacing="5.0">
@@ -135,7 +136,7 @@
         </HBox>
 
                                 <!-- Tabla de canciones -->
-    <TableView fx:id="tablaCanciones" cache="true" editable="true" fixedCellSize="0.0" maxHeight="1.7976931348623157E308" maxWidth="810.0" prefHeight="574.0" prefWidth="805.0" snapToPixel="false" style="-fx-background-color: #ffffff;">
+    <TableView fx:id="tablaCanciones" cache="true" editable="true" fixedCellSize="0.0" maxHeight="1.7976931348623157E308" maxWidth="810.0" onMouseClicked="#ReproducirClick" prefHeight="574.0" prefWidth="805.0" snapToPixel="false" style="-fx-background-color: #ffffff;">
         <columns>
             <TableColumn fx:id="columnaNombre" editable="false" maxWidth="673.0" minWidth="673.0" prefWidth="673.0" resizable="false" sortable="false" text="Canción" />
             <TableColumn fx:id="columnaDuracion" editable="false" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Duración" />
@@ -173,6 +174,7 @@
                <font>
                   <Font size="16.0" />
                </font></Label>
+            <ToggleButton fx:id="btnFavorito" mnemonicParsing="false" text="ToggleButton" />
             </children>
          <opaqueInsets>
             <Insets />

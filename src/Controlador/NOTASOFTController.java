@@ -58,7 +58,7 @@ private SesionGuardada sesionGuardada;
         gestor.cargarListas(ARCHIVO_LISTAS);
 
         inicializarEventos();
-                        cargarSesion(); // Cargar sesión previa
+        cargarSesion(); // Cargar sesión previa
 
 
         // Configurar acción al cerrar la ventana
@@ -131,6 +131,13 @@ private SesionGuardada sesionGuardada;
         vista.getBtnAnterior().setOnAction(e -> anteriorCancion());
         vista.getBtnAleatorio().setOnAction(e -> reproducirAleatoria());
         vista.getBtnRepetirUna().setOnAction(e -> repetirUna());
+        vista.getBtnFavorito().setOnAction(e -> favorito());
+        vista.getBtnmostrarFavoritos().setOnAction(e -> mostrarFavoritos());
+vista.getTablaCanciones().setOnMouseClicked(e -> {
+    if (e.getClickCount() == 1) {
+        reproducirAlTocar();
+    }
+});
         //angelo
         vista.getClasificar().setOnAction(e -> {
             Stage stage = (Stage) vista.getClasificar().getScene().getWindow();
@@ -220,6 +227,19 @@ private SesionGuardada sesionGuardada;
             listaCompletaCanciones.clear();
 
             if (lista != null) {
+                if(nombre.equals("Favoritos")){
+         vista.getBtnAgregarCancion().setDisable(true);
+        vista.getBtnAgregarCarpeta().setDisable(true);
+        vista.getBtnEliminarLista().setDisable(true);
+       vista.getBtnFavorito().setDisable(true);
+
+                }else{
+                  vista.getBtnAgregarCancion().setDisable(false);
+        vista.getBtnAgregarCarpeta().setDisable(false);
+        vista.getBtnEliminarLista().setDisable(false);
+        vista.getBtnFavorito().setDisable(false); 
+
+                }
                 for (String nombreCancion : lista.getNombresCanciones()) {
                     String ruta = lista.getRutaCancion(nombreCancion);
                     String duracion = lista.obtenerDuracionLegible(ruta);
@@ -388,6 +408,11 @@ private void reproducirCancionSeleccionada() {
         seleccionada = vista.getTablaCanciones().getItems().get(0);
     }
     if (seleccionada != null) {
+        if(gestor.esFavorita(seleccionada)){
+            vista.getBtnFavorito().setSelected(true);
+        }else{
+        vista.getBtnFavorito().setSelected(false);
+        }
         try {
             // Si ya había un reproductor activo, lo detenemos
             reproductor.detener();
@@ -725,11 +750,11 @@ private void eliminarCancion() {
             if (reproductor.getMediaPlayer() != null) {
                 double progreso = event.getX() / barra.getWidth();
                 progreso = Math.max(0, Math.min(1, progreso)); // Asegurar rango 0-1
-
-                // Actualizar posición del reproductor
                 Duration nuevaPosicion = reproductor.getMediaPlayer().getTotalDuration().multiply(progreso);
+                System.out.println("Nuevaposciocion: "+nuevaPosicion);
                 reproductor.getMediaPlayer().seek(nuevaPosicion);
-
+                
+System.out.println("Nuevaposciocion formateada: "+reproductor.formatearTiempo(nuevaPosicion));
                 // Actualizar UI inmediatamente
                 vista.getBarraProgreso().setProgress(progreso);
                 vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(nuevaPosicion));
@@ -803,7 +828,11 @@ private void cargarSesion() {
 // Reproducir la canción y ajustar posición/volumen
 if (vista.getTablaCanciones().getSelectionModel().getSelectedItem() != null) {
     Cancion cancion = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-
+        if(gestor.esFavorita(cancion)){
+            vista.getBtnFavorito().setSelected(true);
+        }else{
+        vista.getBtnFavorito().setSelected(false);
+        }
     reproductor.reproducir(cancion.getRuta());
     vista.getNombrePresentacion().setText(cancion.getNombre());
     // Esperar a que el MediaPlayer esté listo para configurar la posición
@@ -895,5 +924,35 @@ public void clasificarCancionPorMetadatos(Stage stage) {
         }
     }
 }
+//Favoritos
+public void favorito (){
+    String listaActual = vista.getSelectorDeListas().getValue();
+    if (listaActual == null) {
+        vista.mostrarAlerta("No hay lista seleccionada");
+        return;
+    }
+    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+    if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
+        vista.mostrarAlerta("Selecciona una cancion para agregar");
+        vista.getBtnFavorito().setSelected(false);
+        return;
+    }
+    if(vista.getBtnFavorito().isSelected()){
+        System.out.println("esta pulsada");
+        gestor.agregarFav(seleccionada);
+    }else{
+        System.out.println("No esta pulsada");
+        gestor.eliminarFav(seleccionada);
+    }
+}
 
+public void mostrarFavoritos() {
+    vista.getSelectorDeListas().getSelectionModel().select("Favoritos");
+}
+public void reproducirAlTocar() {
+    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+    if (seleccionada != null) {
+        reproducirCancionSeleccionada();
+    }
+}
 }

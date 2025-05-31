@@ -24,7 +24,7 @@ import java.util.List;
 public class GestorDeListas implements Serializable {
 
     private static final long serialVersionUID = 1L; // Versión para serialización
-
+private ListaReproduccion listaFav = new ListaReproduccion();
     // Mapa que almacena las listas de reproducción (nombre -> lista)
     private Map<String, ListaReproduccion> listas;
 
@@ -176,6 +176,7 @@ public class GestorDeListas implements Serializable {
      * @param archivo Ruta del archivo destino
      */
     public void guardarListas(String archivo) {
+        listas.put("Favoritos",listaFav);
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(archivo))) {
             out.writeObject(listas);
         } catch (IOException e) {
@@ -188,15 +189,24 @@ public class GestorDeListas implements Serializable {
      *
      * @param archivo Ruta del archivo fuente
      */
-    @SuppressWarnings("unchecked")
-    public void cargarListas(String archivo) {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(archivo))) {
-            listas = (Map<String, ListaReproduccion>) in.readObject();
-            System.out.println("Listas cargadas: " + listas.keySet());
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error al cargar las listas: " + e.getMessage());
+@SuppressWarnings("unchecked")
+public void cargarListas(String archivo) {
+    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(archivo))) {
+        listas = (Map<String, ListaReproduccion>) in.readObject();
+
+        // Recuperar lista de favoritos si está presente
+        if (listas.containsKey("Favoritos")) {
+            listaFav = listas.get("Favoritos"); // Referencia directa (sin eliminarla del mapa)
+        } else {
+            listaFav = new ListaReproduccion();
+            listas.put("Favoritos", listaFav); // 💡 Asegúrate de agregarla si no estaba
         }
+
+        System.out.println("Listas cargadas: " + listas.keySet());
+    } catch (IOException | ClassNotFoundException e) {
+        System.out.println("Error al cargar las listas: " + e.getMessage());
     }
+}
     
     
     //Anghelo
@@ -211,5 +221,28 @@ public class GestorDeListas implements Serializable {
         c != null && c.getRuta() != null && c.getRuta().equals(ruta)
     );
 }
+//Xavier-Greco
+public void agregarFav(Cancion cancion){
+        if(!esFavorita(cancion)){
+            if(listaFav.getRutaPorNombre(cancion.getNombre())==null){
+            listaFav.agregarCancion(cancion.getNombre(), cancion.getRuta());
+                System.out.println(listaFav);
+            }else{
+                return;
+            }
+         }
+    }
+    public void eliminarFav(Cancion cancion){
+        listaFav.eliminarCancion(cancion.getNombre());
+        System.out.println(listaFav);
+    }
+    public boolean esFavorita(Cancion cancion){
+        if(listaFav.getRutaPorNombre(cancion.getNombre())!=null){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
 
 }
