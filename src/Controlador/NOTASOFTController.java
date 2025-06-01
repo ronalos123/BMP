@@ -30,6 +30,9 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import modelo.Cancion;
 import modelo.SesionGuardada;
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.images.Artwork;
 import vista.NOTASOFTView;
 
 public class NOTASOFTController extends Application {
@@ -285,11 +288,15 @@ private void eliminarListaActual() {
         boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la lista: " + nombre + "? Esta acción no se puede deshacer.");
 
         if (confirmado) {
+            Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+            if (seleccionada!=null) {
+                reproductor.detener();
+            vista.getBarraProgreso().setProgress(0);
+            vista.getNombrePresentacion().setText("");
+            }
             gestor.eliminarLista(nombre);
             vista.getSelectorDeListas().getItems().remove(nombre);
             vista.getTablaCanciones().getItems().clear();
-            reproductor.detener();
-            vista.getBarraProgreso().setProgress(0);
 
             if (!vista.getSelectorDeListas().getItems().isEmpty()) {
                 vista.getSelectorDeListas().setValue(vista.getSelectorDeListas().getItems().get(0));
@@ -364,6 +371,10 @@ private void agregarCancionDesdeEscritorio() {
             String nombreCancion = archivo.getName();
             String duracion = lista.obtenerDuracionLegible(ruta);
             // Agregar solo una vez a la lista de reproducción
+            if (lista.getRutaPorNombre(nombreCancion)!=null) {
+                vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
+                continue;
+            }
             lista.agregarCancion(nombreCancion, ruta);
             
             // Crear la canción una sola vez
@@ -404,7 +415,10 @@ private void agregarCancionesDesdeCarpeta() {
                 String ruta = archivo.getAbsolutePath();
                 String nombreCancion = archivo.getName();
                 String duracion = lista.obtenerDuracionLegible(ruta);
-                
+                if (lista.getRutaPorNombre(nombreCancion)!=null) {
+                vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
+                continue;
+                }
                 lista.agregarCancion(nombreCancion, ruta);
                 listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
                 cargarListaSeleccionada();
@@ -626,7 +640,6 @@ private void eliminarCancion() {
         }
 
         if (lista.eliminarCancion(seleccionada.getNombre())) {
-            gestor.eliminarFav(seleccionada);
             canciones.remove(seleccionada);
             vista.getNombrePresentacion().setText("");
             listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
