@@ -56,6 +56,7 @@ public class NOTASOFTView {
     private final Image imgFavoritoFalse = new Image(getClass().getResource("/resources/imagenes/Favorite_False.png").toExternalForm());
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
+    @FXML private ImageView imagenPortada;
     @FXML
 public void initialize() {
     // Imagen inicial
@@ -213,7 +214,7 @@ public void aplicarEfectoBoton(Button boton) {
     public Button getClasificar () {return btnClasificar;}
     public Label getNombrePresentacion() { return NombrePresentacion;}
     public Button getBtnmostrarFavoritos() { return btnmostrarFavoritos;}
-    
+    public ImageView getImagePortada(){return imagenPortada;}
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");

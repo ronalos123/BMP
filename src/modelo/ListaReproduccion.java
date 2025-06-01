@@ -5,6 +5,7 @@ package modelo;
  * canciones. Permite agregar, eliminar, buscar y ordenar canciones, así como
  * obtener metadatos de los archivos de audio usando la biblioteca JAudioTagger.
  */
+import java.io.ByteArrayInputStream;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -13,6 +14,9 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.scene.image.Image;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.images.Artwork;
 
 public class ListaReproduccion implements Serializable {
 
@@ -384,5 +388,23 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
 public List<Cancion> getCanciones() {
     return canciones;
 }
+public Image obtenerPortada(String ruta) {
+    try {
+        File archivo = new File(ruta);                             // Crear archivo a partir de la ruta
+        AudioFile audioFile = AudioFileIO.read(archivo);           // Leer metadatos del archivo
+        Tag tag = audioFile.getTag();                              // Obtener las etiquetas (tags)
 
+        if (tag != null && tag.getFirstArtwork() != null) {        // Verificar si hay portada
+            Artwork artwork = tag.getFirstArtwork();               // Obtener la portada
+            byte[] imagenBytes = artwork.getBinaryData();          // Obtener los datos binarios
+            Image portada = new Image(new ByteArrayInputStream(imagenBytes)); // Convertir a Image
+            return portada;                                        // Devolver la portada
+        } else {
+            return null;                                           // No hay portada
+        }
+    } catch (Exception e) {
+        System.out.println("Error al cargar portada: " + e.getMessage());
+        return null;                                               // En caso de error, devolver null
+    }
+}
 }

@@ -373,5 +373,5 @@ public void detener() {
      */
     public boolean getModoRepeticion() {
         return repetirUna;
-    }    
+    }
 }

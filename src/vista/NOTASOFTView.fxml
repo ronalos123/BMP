@@ -175,7 +175,7 @@
                <image>
                   <Image url="@../resources/imagenes/Logo.png" />
                </image></ImageView>
-            <ImageView fitHeight="122.0" fitWidth="147.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="imagenPortada" fitHeight="122.0" fitWidth="147.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../resources/imagenes/disco-de-musica-con-nota-musical.png" />
                </image>

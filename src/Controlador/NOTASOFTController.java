@@ -24,15 +24,13 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
 import javafx.scene.media.AudioClip;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import modelo.Cancion;
 import modelo.SesionGuardada;
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.images.Artwork;
 import vista.NOTASOFTView;
 
 public class NOTASOFTController extends Application {
@@ -293,6 +291,7 @@ private void eliminarListaActual() {
                 reproductor.detener();
             vista.getBarraProgreso().setProgress(0);
             vista.getNombrePresentacion().setText("");
+            vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
             }
             gestor.eliminarLista(nombre);
             vista.getSelectorDeListas().getItems().remove(nombre);
@@ -461,6 +460,7 @@ private void reproducirCancionSeleccionada() {
 
             // Iniciar reproducción de la nueva canción
             reproductor.reproducir(seleccionada.getRuta());
+            mostrarPortada(seleccionada);
             
         } catch (Exception e) {
             vista.mostrarAlerta("Error al reproducir: " + e.getMessage());
@@ -862,6 +862,7 @@ private void cargarSesion() {
                 if (cancion.getNombre().equals(sesionGuardada.getCancionActual())) {
                     vista.getTablaCanciones().getSelectionModel().select(cancion);
                     vista.getTablaCanciones().scrollTo(cancion);
+                    mostrarPortada(cancion);
                     break;
                 }
             }
@@ -995,6 +996,15 @@ public void reproducirAlTocar() {
     Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
     if (seleccionada != null) {
         reproducirCancionSeleccionada();
+    }
+}
+public void mostrarPortada(Cancion cancion){
+    String nombre = vista.getSelectorDeListas().getValue();
+    ListaReproduccion lista = gestor.getLista(nombre);
+    if(lista.obtenerPortada(cancion.getRuta())==null){
+        vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
+    }else{
+        vista.getImagePortada().setImage(lista.obtenerPortada(cancion.getRuta()));
     }
 }
 }
