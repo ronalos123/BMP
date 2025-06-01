@@ -221,37 +221,60 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
     /**
      * Carga la lista seleccionada en la vista
      */
-    private void cargarListaSeleccionada() {
-        String nombre = vista.getSelectorDeListas().getValue();
-        if (nombre != null) {
-            ListaReproduccion lista = gestor.getLista(nombre);
-            listaCompletaCanciones.clear();
+private void cargarListaSeleccionada() {
+    String nombre = vista.getSelectorDeListas().getValue();
+    if (nombre != null) {
+        ListaReproduccion lista = gestor.getLista(nombre);
+        listaCompletaCanciones.clear();
 
-            if (lista != null) {
-                if(nombre.equals("Favoritos")){
-         vista.getBtnAgregarCancion().setDisable(true);
-        vista.getBtnAgregarCarpeta().setDisable(true);
-        vista.getBtnEliminarLista().setDisable(true);
-       vista.getBtnFavorito().setDisable(true);
+        if (lista != null) {
 
+            if (nombre.equals("Favoritos")) {
+                vista.getBtnAgregarCancion().setDisable(true);
+                vista.getBtnAgregarCarpeta().setDisable(true);
+                vista.getBtnEliminarLista().setDisable(true);
+                vista.getBtnFavorito().setDisable(true);
+                vista.getBtnmostrarFavoritos().setDisable(true);
+            } else {
+                vista.getBtnAgregarCancion().setDisable(false);
+                vista.getBtnAgregarCarpeta().setDisable(false);
+                vista.getBtnEliminarLista().setDisable(false);
+                vista.getBtnFavorito().setDisable(false);
+                vista.getBtnmostrarFavoritos().setDisable(false);
+                
+                if(lista.vacia()){
+                    vista.getBtnFavorito().setDisable(true);
+                    vista.getBtnEliminar().setDisable(true);
                 }else{
-                  vista.getBtnAgregarCancion().setDisable(false);
-        vista.getBtnAgregarCarpeta().setDisable(false);
-        vista.getBtnEliminarLista().setDisable(false);
-        vista.getBtnFavorito().setDisable(false); 
-
-                }
-                for (String nombreCancion : lista.getNombresCanciones()) {
-                    String ruta = lista.getRutaCancion(nombreCancion);
-                    String duracion = lista.obtenerDuracionLegible(ruta);
-                    listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
+                vista.getBtnFavorito().setDisable(false);
+                vista.getBtnEliminar().setDisable(false); 
                 }
             }
 
-            // Mostrar la lista completa
-            vista.getTablaCanciones().setItems(listaCompletaCanciones);
+            for (String nombreCancion : lista.getNombresCanciones()) {
+                String ruta = lista.getRutaCancion(nombreCancion);
+                String duracion = lista.obtenerDuracionLegible(ruta);
+                Cancion cancion = new Cancion(nombreCancion, duracion, ruta);
+                listaCompletaCanciones.add(cancion);
+            }
         }
+
+        // Mostrar la lista completa
+        vista.getTablaCanciones().setItems(listaCompletaCanciones);
+
+        // Seleccionar y hacer scroll a la canción actual
+        String nombreActual = vista.getNombrePresentacion().getText();
+        Platform.runLater(() -> {
+            for (Cancion cancion : listaCompletaCanciones) {
+                if (cancion.getNombre().equals(nombreActual)) {
+                    vista.getTablaCanciones().getSelectionModel().select(cancion);
+                    vista.getTablaCanciones().scrollTo(cancion);
+                    break;
+                }
+            }
+        });
     }
+}
 
     /**
      * Elimina la lista actualmente seleccionada
@@ -340,7 +363,6 @@ private void agregarCancionDesdeEscritorio() {
             String ruta = archivo.getAbsolutePath();
             String nombreCancion = archivo.getName();
             String duracion = lista.obtenerDuracionLegible(ruta);
-            
             // Agregar solo una vez a la lista de reproducción
             lista.agregarCancion(nombreCancion, ruta);
             
@@ -349,6 +371,7 @@ private void agregarCancionDesdeEscritorio() {
             
             // Agregar a ambas listas (la vista se actualizará automáticamente)
             listaCompletaCanciones.add(nuevaCancion);
+            cargarListaSeleccionada();
         }
         // Actualizar la búsqueda para reflejar los cambios
         buscarCancion();
@@ -384,6 +407,7 @@ private void agregarCancionesDesdeCarpeta() {
                 
                 lista.agregarCancion(nombreCancion, ruta);
                 listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
+                cargarListaSeleccionada();
             }
         }
     } else {
@@ -423,6 +447,7 @@ private void reproducirCancionSeleccionada() {
 
             // Iniciar reproducción de la nueva canción
             reproductor.reproducir(seleccionada.getRuta());
+            
         } catch (Exception e) {
             vista.mostrarAlerta("Error al reproducir: " + e.getMessage());
             siguienteCancion();
@@ -601,6 +626,7 @@ private void eliminarCancion() {
         }
 
         if (lista.eliminarCancion(seleccionada.getNombre())) {
+            gestor.eliminarFav(seleccionada);
             canciones.remove(seleccionada);
             vista.getNombrePresentacion().setText("");
             listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
@@ -822,6 +848,7 @@ private void cargarSesion() {
             for (Cancion cancion : vista.getTablaCanciones().getItems()) {
                 if (cancion.getNombre().equals(sesionGuardada.getCancionActual())) {
                     vista.getTablaCanciones().getSelectionModel().select(cancion);
+                    vista.getTablaCanciones().scrollTo(cancion);
                     break;
                 }
             }
