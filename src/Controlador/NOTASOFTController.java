@@ -134,6 +134,7 @@ private SesionGuardada sesionGuardada;
         vista.getBtnAleatorio().setOnAction(e -> reproducirAleatoria());
         vista.getBtnRepetirUna().setOnAction(e -> repetirUna());
         vista.getBtnFavorito().setOnAction(e -> favorito());
+        vista.getBtnModoOscuro().setOnAction(e -> modoOscuro());
         vista.getBtnmostrarFavoritos().setOnAction(e -> mostrarFavoritos());
 vista.getTablaCanciones().setOnMouseClicked(e -> {
     if (e.getClickCount() == 1) {
@@ -236,6 +237,11 @@ private void cargarListaSeleccionada() {
                 vista.getBtnEliminarLista().setDisable(true);
                 vista.getBtnFavorito().setDisable(true);
                 vista.getBtnmostrarFavoritos().setDisable(true);
+                if (lista.vacia()) {
+                    vista.getBtnEliminar().setDisable(true);
+                }else{
+                    vista.getBtnEliminar().setDisable(false);
+                }
             } else {
                 vista.getBtnAgregarCancion().setDisable(false);
                 vista.getBtnAgregarCarpeta().setDisable(false);
@@ -248,7 +254,12 @@ private void cargarListaSeleccionada() {
                     vista.getBtnEliminar().setDisable(true);
                 }else{
                 vista.getBtnFavorito().setDisable(false);
-                vista.getBtnEliminar().setDisable(false); 
+                vista.getBtnEliminar().setDisable(false);
+                    if (lista.getRutaCancion(vista.getNombrePresentacion().getText())==null) {
+                        vista.getBtnFavorito().setDisable(true);
+                    }else{
+                        vista.getBtnFavorito().setDisable(false);
+                    }
                 }
             }
 
@@ -444,6 +455,11 @@ private void reproducirCancionSeleccionada() {
     if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
         vista.getTablaCanciones().getSelectionModel().select(0);
         seleccionada = vista.getTablaCanciones().getItems().get(0);
+    }
+    if(listaActual.equals("Favoritos")){
+        vista.getBtnFavorito().setDisable(true);
+    }else{
+         vista.getBtnFavorito().setDisable(false);
     }
     if (seleccionada != null) {
         if(gestor.esFavorita(seleccionada)){
@@ -653,6 +669,7 @@ private void eliminarCancion() {
                 
                 // Reproducir la siguiente canción si existe
                 if (!canciones.isEmpty()) {
+                    vista.getBtnEliminar().setDisable(false);
                     // Si el índice eliminado está dentro del rango, reproducir la que sigue
                     if (indiceActual >= canciones.size()) {
                         indiceActual = canciones.size() - 1; // en caso de que se haya eliminado la última
@@ -661,7 +678,8 @@ private void eliminarCancion() {
                     Cancion siguiente = canciones.get(indiceActual);
                     vista.getTablaCanciones().getSelectionModel().select(siguiente);
                         reproducirCancionSeleccionada();
-                    
+                }else{
+                   vista.getBtnEliminar().setDisable(true); 
                 }
             }
 
@@ -855,6 +873,7 @@ private void cargarSesion() {
         sesionGuardada = (SesionGuardada) in.readObject();
         if (sesionGuardada != null && gestor.existeLista(sesionGuardada.getListaActual())) {
             vista.getSelectorDeListas().setValue(sesionGuardada.getListaActual());
+            vista.getNombrePresentacion().setText(sesionGuardada.getCancionActual());
             cargarListaSeleccionada();
 
             // Seleccionar la canción que estaba sonando
@@ -1006,5 +1025,40 @@ public void mostrarPortada(Cancion cancion){
     }else{
         vista.getImagePortada().setImage(lista.obtenerPortada(cancion.getRuta()));
     }
+}
+    private void modoOscuro() {
+
+            if (vista.getBtnModoOscuro().isSelected()) {
+                activarModoOscuro();
+            } else {
+                activarModoClaro();
+            }
+
+    }
+
+    private void activarModoOscuro() {
+        vista.getRoot().setStyle("-fx-background-color: #888888;");
+        vista.getNombrePresentacion().setStyle("-fx-text-fill: white;");
+vista.getTablaCanciones().setStyle("-fx-control-inner-background: #424242;");
+vista.getCampoBusqueda().setStyle("-fx-background-color: #424242; -fx-text-fill: white;");
+vista.getComboBoxOrdenar().setStyle("-fx-background-color: #BFBFBF;");
+vista.getSelectorDeListas().setStyle("-fx-background-color: #BFBFBF;");
+vista.getBtnModoOscuro().setText("☀ Modo Claro");
+vista.getBtnModoOscuro().setStyle(
+    "-fx-background-color: transparent;" + "-fx-text-fill: white;" + "-fx-border-color: transparent;"      
+);
+    }
+
+    private void activarModoClaro() {
+        vista.getRoot().setStyle("-fx-background-color:  #e9eef2;");
+        vista.getNombrePresentacion().setStyle("-fx-text-fill: black;");
+vista.getTablaCanciones().setStyle("-fx-control-inner-background: white;");
+vista.getCampoBusqueda().setStyle(",-fx-background-color: #94b3c8;");
+vista.getComboBoxOrdenar().setStyle("-fx-background-color: #94b3c8;");
+vista.getSelectorDeListas().setStyle("-fx-background-color: #a4d7f4;");
+    vista.getBtnModoOscuro().setText("🌙 Modo Oscuro");
+    vista.getBtnModoOscuro().setStyle(
+    "-fx-background-color: transparent;" + "-fx-text-fill: black;" + "-fx-border-color: transparent;"      
+);
 }
 }

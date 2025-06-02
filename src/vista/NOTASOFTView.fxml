@@ -14,7 +14,17 @@
         <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
     </padding>
     <children>
-      <HBox alignment="CENTER" prefHeight="137.0" prefWidth="1076.0" />
+      <HBox alignment="BASELINE_RIGHT" prefHeight="137.0" prefWidth="1076.0">
+         <children>
+            <ToggleButton fx:id="btnmodoOscuro" maxHeight="30.0" maxWidth="110.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="110.0" style="-fx-background-color: Transparent;" text="🌙 Modo Oscuro" textAlignment="JUSTIFY">
+               <HBox.margin>
+                  <Insets right="10.0" top="10.0" />
+               </HBox.margin>
+            </ToggleButton>
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets></HBox>
 
         <!-- Gestión de listas -->
         <HBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="31.0" prefWidth="808.0" spacing="350.0">
@@ -107,7 +117,7 @@
             <children>
             <HBox prefHeight="100.0" prefWidth="200.0">
                <children>
-                      <TextField fx:id="campoBusqueda" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="1021.0" promptText="Buscar canción..." style="-fx-font-size: 13px; -fx-background-color: #fdfefe; -fx-pref-width: 400px;" />
+                      <TextField fx:id="campoBusqueda" maxHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="400.0" promptText="Buscar canción..." style="-fx-font-size: 13px; -fx-background-color: #fdfefe; -fx-pref-width: 400px;" />
                </children>
             </HBox>
             <HBox prefHeight="100.0" prefWidth="200.0" spacing="15.0">

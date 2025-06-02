@@ -57,6 +57,7 @@ public class NOTASOFTView {
     @FXML private ToggleButton btnRepetirUna;
     @FXML private TextField campoBusqueda;
     @FXML private ImageView imagenPortada;
+    @FXML private ToggleButton btnmodoOscuro;
     @FXML
 public void initialize() {
     // Imagen inicial
@@ -125,6 +126,7 @@ public void aplicarEfectoBoton(Button boton) {
         boton.setStyle(estiloOriginal);
     });
 }
+
     private void configurarDragAndDrop() {
         tablaCanciones.setRowFactory(tv -> {
             TableRow<Cancion> row = new TableRow<>();
@@ -211,10 +213,12 @@ public void aplicarEfectoBoton(Button boton) {
     public Button getBtnInvertir() { return btnInvertir; }
     public ToggleButton getBtnRepetirUna() { return btnRepetirUna; }
     public ToggleButton getBtnFavorito() { return btnFavorito; }
+    public ToggleButton getBtnModoOscuro(){return btnmodoOscuro;}
     public Button getClasificar () {return btnClasificar;}
     public Label getNombrePresentacion() { return NombrePresentacion;}
     public Button getBtnmostrarFavoritos() { return btnmostrarFavoritos;}
     public ImageView getImagePortada(){return imagenPortada;}
+    public VBox getRoot(){return root; }
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");
