@@ -47,6 +47,7 @@ public class NOTASOFTView {
     @FXML private Button btnAleatorio;
     @FXML private Button btnInvertir;
     @FXML private Label NombrePresentacion;
+    @FXML private Button btnrenombrarListaSeleccionada;
     //angelo
     @FXML private Button btnClasificar;
     //Greco-Xavier
@@ -219,6 +220,7 @@ public void aplicarEfectoBoton(Button boton) {
     public Button getBtnmostrarFavoritos() { return btnmostrarFavoritos;}
     public ImageView getImagePortada(){return imagenPortada;}
     public VBox getRoot(){return root; }
+    public Button getBtnRenombrarListaSeleccionada(){return btnrenombrarListaSeleccionada;}
     public void mostrarAlerta(String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle("Información");

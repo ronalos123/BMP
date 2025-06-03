@@ -244,5 +244,12 @@ public void agregarFav(Cancion cancion){
         }
     }
 
-
+public int nroDeMusicasEn(String nombreLista) {
+        ListaReproduccion lista = listas.get(nombreLista);
+        if (lista != null) {
+            return lista.contarCanciones(); 
+        } else {
+            return 0;
+        }
+    }
 }

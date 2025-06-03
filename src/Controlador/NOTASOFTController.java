@@ -136,6 +136,7 @@ private SesionGuardada sesionGuardada;
         vista.getBtnFavorito().setOnAction(e -> favorito());
         vista.getBtnModoOscuro().setOnAction(e -> modoOscuro());
         vista.getBtnmostrarFavoritos().setOnAction(e -> mostrarFavoritos());
+        vista.getBtnRenombrarListaSeleccionada().setOnAction(e -> renombrarListaSeleccionada());
 vista.getTablaCanciones().setOnMouseClicked(e -> {
     if (e.getClickCount() == 1) {
         reproducirAlTocar();
@@ -159,6 +160,7 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
                 vista.aplicarEfectoBoton(vista.getBtnNuevaLista());
                 vista.aplicarEfectoBoton(vista.getBtnEliminarLista());
                 vista.aplicarEfectoBoton(vista.getBtnInvertir());
+                vista.aplicarEfectoBoton(vista.getBtnRenombrarListaSeleccionada());
         //Configurar bucle de repeticion
         vista.getBtnRepetirUna().selectedProperty().addListener((obs, oldVal, newVal) -> {
             actualizarEstiloBotonRepetir(newVal);
@@ -230,13 +232,13 @@ private void cargarListaSeleccionada() {
         listaCompletaCanciones.clear();
 
         if (lista != null) {
-
             if (nombre.equals("Favoritos")) {
                 vista.getBtnAgregarCancion().setDisable(true);
                 vista.getBtnAgregarCarpeta().setDisable(true);
                 vista.getBtnEliminarLista().setDisable(true);
                 vista.getBtnFavorito().setDisable(true);
                 vista.getBtnmostrarFavoritos().setDisable(true);
+                vista.getBtnRenombrarListaSeleccionada().setDisable(true);
                 if (lista.vacia()) {
                     vista.getBtnEliminar().setDisable(true);
                 }else{
@@ -248,7 +250,7 @@ private void cargarListaSeleccionada() {
                 vista.getBtnEliminarLista().setDisable(false);
                 vista.getBtnFavorito().setDisable(false);
                 vista.getBtnmostrarFavoritos().setDisable(false);
-                
+                vista.getBtnRenombrarListaSeleccionada().setDisable(false);
                 if(lista.vacia()){
                     vista.getBtnFavorito().setDisable(true);
                     vista.getBtnEliminar().setDisable(true);
@@ -262,7 +264,7 @@ private void cargarListaSeleccionada() {
                     }
                 }
             }
-
+            
             for (String nombreCancion : lista.getNombresCanciones()) {
                 String ruta = lista.getRutaCancion(nombreCancion);
                 String duracion = lista.obtenerDuracionLegible(ruta);
@@ -273,7 +275,7 @@ private void cargarListaSeleccionada() {
 
         // Mostrar la lista completa
         vista.getTablaCanciones().setItems(listaCompletaCanciones);
-
+        vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombre));
         // Seleccionar y hacer scroll a la canción actual
         String nombreActual = vista.getNombrePresentacion().getText();
         Platform.runLater(() -> {
@@ -660,7 +662,7 @@ private void eliminarCancion() {
             vista.getNombrePresentacion().setText("");
             listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
             buscarCancion();
-
+vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombreLista));
             if (esLaCancionActual) {
                 reproductor.detener();
                 vista.getBarraProgreso().setProgress(0);
@@ -1061,4 +1063,36 @@ vista.getSelectorDeListas().setStyle("-fx-background-color: #a4d7f4;");
     "-fx-background-color: transparent;" + "-fx-text-fill: black;" + "-fx-border-color: transparent;"      
 );
 }
+private void renombrarListaSeleccionada() {
+    String nombreActual = vista.getSelectorDeListas().getValue(); // Nombre actual
+    
+    if (nombreActual != null) {
+        TextInputDialog dialogo = new TextInputDialog(nombreActual);
+        
+        dialogo.setTitle("Renombrar Lista");
+        dialogo.setHeaderText("Cambiar el nombre de la lista");
+        dialogo.setContentText("Nuevo nombre:");
+
+        Optional<String> resultado = dialogo.showAndWait();
+        resultado.ifPresent(nuevoNombre -> {
+            nuevoNombre = nuevoNombre.trim();
+            if (!nuevoNombre.isEmpty() && !nuevoNombre.equals(nombreActual)) {
+                if (!gestor.existeLista(nuevoNombre)) {
+                    gestor.renombrarLista(nombreActual, nuevoNombre);
+                    ObservableList<String> items = vista.getSelectorDeListas().getItems();
+                    int index = items.indexOf(nombreActual);
+                    if (index != -1) {
+                        items.set(index, nuevoNombre);
+                    }
+                    vista.getSelectorDeListas().setValue(nuevoNombre);
+                }else{
+                    vista.mostrarAlerta("Ya existe una lista con este nombre");
+                }
+            }else{
+                vista.mostrarAlerta("Selecciona un nuevo nombre no vacio y no existente");
+            }
+        });
+    }
+}    
+
 }

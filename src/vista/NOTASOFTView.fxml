@@ -35,6 +35,17 @@
                      <tooltip>
                         <Tooltip text="Seleciona una lista de las que ya existen" textAlignment="JUSTIFY" />
                      </tooltip></ComboBox>
+                  <Button fx:id="btnrenombrarListaSeleccionada" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="22.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../resources/imagenes/Editar.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Edita el nombre de la lista Seleccionada" />
+                     </tooltip></Button>
                       <Button fx:id="btnNuevaLista" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                      <tooltip>
                         <Tooltip text="Crear una lista nueva" textAlignment="JUSTIFY" />

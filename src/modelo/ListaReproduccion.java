@@ -407,4 +407,15 @@ public Image obtenerPortada(String ruta) {
         return null;                                               // En caso de error, devolver null
     }
 }
+public int contarCanciones(){
+    int res=0;
+        if (!vacia()){
+            Nodo ac = cabeza;
+            while (ac!=null){
+                res=res+1;
+                ac=ac.getSiguiente();
+            }
+        }
+    return res;
+}
 }
