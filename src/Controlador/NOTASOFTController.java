@@ -1,7 +1,7 @@
 package Controlador;
 
 /*
- * NOTASOFTController - Controlador principal para la aplicación de reproducción musical.
+ * Controlador principal para la aplicación de reproducción musical NOTASOFT.
  * Gestiona la interacción entre la vista y los modelos del reproductor.
  */
 import javafx.application.Application;
@@ -22,6 +22,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
@@ -34,34 +35,46 @@ import modelo.SesionGuardada;
 import vista.NOTASOFTView;
 
 public class NOTASOFTController extends Application {
-private final AudioClip PopBurbuja = new AudioClip(getClass().getResource("/resources/sonidos/BurbujaPop.mp3").toExternalForm());
+    // Efecto de sonido para acciones de favoritos
+    private final AudioClip PopBurbuja = new AudioClip(getClass().getResource("/resources/sonidos/BurbujaPop.mp3").toExternalForm());
+    
     // Componentes principales del controlador
     private GestorDeListas gestor;                              // Maneja las listas de reproducción
     private Reproductor reproductor;                            // Controla la reproducción de audio
     private NOTASOFTView vista;                                 // Interfaz gráfica
-    private static final String ARCHIVO_LISTAS = "listas.dat";  // Archivo para persistencia
+    private static final String ARCHIVO_LISTAS = "listas.dat";  // Archivo para persistencia de listas
     private Timeline actualizadorProgreso;                      // Actualiza la barra de progreso
-private static final String ARCHIVO_SESION = "sesion.dat";
-private SesionGuardada sesionGuardada;
-    private ObservableList<Cancion> listaCompletaCanciones = FXCollections.observableArrayList();
+    private static final String ARCHIVO_SESION = "sesion.dat";  // Archivo para persistencia de sesión
+    private SesionGuardada sesionGuardada;                      // Datos de la sesión actual
+    private ObservableList<Cancion> listaCompletaCanciones = FXCollections.observableArrayList(); // Lista completa de canciones
+
     /* ***********************
      * MÉTODOS PRINCIPALES
      * ***********************/
+
+    /**
+     * Método principal de inicio de la aplicación JavaFX
+     * @param primaryStage Escenario principal de la aplicación
+     */
     @Override
     public void start(Stage primaryStage) {
-        // Inicialización de componentes
+        // Inicialización de componentes principales
         gestor = new GestorDeListas();
         reproductor = new Reproductor();
         vista = new NOTASOFTView(primaryStage);
 
+        // Configuración inicial
         configurarBindings();
-
-        // Cargar listas guardadas
+        configurarAtajosTeclado();
         gestor.cargarListas(ARCHIVO_LISTAS);
-
         inicializarEventos();
-        cargarSesion(); // Cargar sesión previa
-
+        if (!gestor.existeLista("Favoritos")) {
+          vista.getSelectorDeListas().getItems().add("Favoritos");
+          gestor.guardarListas(ARCHIVO_LISTAS);
+          gestor.cargarListas("Favoritos");
+          //vista.getSelectorDeListas().setValue(Favoritos);  
+        }
+        cargarSesion(); // Cargar sesión previa si existe
 
         // Configurar acción al cerrar la ventana
         primaryStage.setOnCloseRequest(event -> {
@@ -71,14 +84,17 @@ private SesionGuardada sesionGuardada;
             Platform.exit();
             System.exit(0);
         });
-    primaryStage.setMinWidth(850);   
-    primaryStage.setMinHeight(750);
+        
+        // Establecer tamaño mínimo de la ventana
+        primaryStage.setMinWidth(850);   
+        primaryStage.setMinHeight(750);
         primaryStage.show();
     }
 
     /* ***********************
      * CONFIGURACIÓN DE VISTA
      * ***********************/
+
     /**
      * Configura los bindings entre el modelo y la vista
      */
@@ -92,7 +108,7 @@ private SesionGuardada sesionGuardada;
         actualizadorProgreso = new Timeline(
                 new KeyFrame(Duration.millis(100), e -> {
                     if (reproductor.getMediaPlayer() != null
-                    && !vista.BarraProgresoPresionado()) {
+                    && !vista.barraProgresoPresionado()) {
                         vista.getBarraProgreso().setProgress(reproductor.getProgreso());
                         vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getCurrentTime()));
                         vista.getTiempoTotalLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getTotalDuration()));
@@ -110,14 +126,68 @@ private SesionGuardada sesionGuardada;
         });
     }
 
+    /**
+     * Configura los atajos de teclado globales
+     */
+    private void configurarAtajosTeclado() {
+        vista.configurarAtajosGlobales(event -> {
+            Platform.runLater(() -> {
+                switch (event.getCode()) {
+                    case RIGHT:
+                        siguienteCancion();
+                        resaltarBoton(vista.getBtnSiguiente());
+                        break;
+                    case LEFT:
+                        anteriorCancion();
+                        resaltarBoton(vista.getBtnAnterior());
+                        break;
+                    case SPACE:
+                        manejarPausaReanudar();
+                        break;
+                }
+            });
+        });
+        
+        // Forzar foco inicial en la tabla de canciones
+        Platform.runLater(() -> vista.getTablaCanciones().requestFocus());
+    }
+
+    /**
+     * Maneja la acción de pausar/reanudar
+     */
+    private void manejarPausaReanudar() {
+        if (reproductor.getMediaPlayer() != null) {
+            MediaPlayer.Status status = reproductor.getMediaPlayer().getStatus();
+            if (status == MediaPlayer.Status.PLAYING) {
+                reproductor.pausar();
+                resaltarBoton(vista.getBtnPausa());
+            } else {
+                reproductor.reanudar();
+                resaltarBoton(vista.getBtnReanudar());
+            }
+        }
+    }
+
+    /**
+     * Efecto visual para resaltar botones al ser accionados
+     * @param boton Botón a resaltar
+     */
+    private void resaltarBoton(Button boton) {
+        boton.setStyle("-fx-background-color: #cccccc;");
+        new Timeline(new KeyFrame(Duration.millis(200), e -> {
+            boton.setStyle("-fx-background-color: transparent;");
+        })).play();
+    }
+
     /* ***********************
      * MANEJO DE EVENTOS
      * ***********************/
+
     /**
      * Inicializa los eventos de los controles de la interfaz
      */
     private void inicializarEventos() {
-        // Configurar eventos de los botones
+        // Configurar eventos de los botones principales
         vista.getBtnInvertir().setOnAction(e -> invertirListaActual());
         vista.getSelectorDeListas().setOnAction(e -> cargarListaSeleccionada());
         vista.getBtnNuevaLista().setOnAction(e -> crearNuevaLista());
@@ -137,31 +207,37 @@ private SesionGuardada sesionGuardada;
         vista.getBtnModoOscuro().setOnAction(e -> modoOscuro());
         vista.getBtnmostrarFavoritos().setOnAction(e -> mostrarFavoritos());
         vista.getBtnRenombrarListaSeleccionada().setOnAction(e -> renombrarListaSeleccionada());
-vista.getTablaCanciones().setOnMouseClicked(e -> {
-    if (e.getClickCount() == 1) {
-        reproducirAlTocar();
-    }
-});
-        //angelo
+        
+        // Reproducir al hacer clic en una canción
+        vista.getTablaCanciones().setOnMouseClicked(e -> {
+            if (e.getClickCount() == 1) {
+                reproducirAlTocar();
+            }
+        });
+        
+        // Configurar clasificación por metadatos
         vista.getClasificar().setOnAction(e -> {
             Stage stage = (Stage) vista.getClasificar().getScene().getWindow();
             clasificarCancionPorMetadatos(stage);
         });
+        
+        // Aplicar efectos visuales a los botones
         vista.aplicarEfectoBoton(vista.getBtnAnterior());
         vista.aplicarEfectoBoton(vista.getBtnSiguiente());
         vista.aplicarEfectoBoton(vista.getBtnReproducir());
         vista.aplicarEfectoBoton(vista.getBtnPausa());
         vista.aplicarEfectoBoton(vista.getBtnReanudar());
-                vista.aplicarEfectoBoton(vista.getBtnEliminar());
-                vista.aplicarEfectoBoton(vista.getBtnAleatorio());
-                vista.aplicarEfectoBoton(vista.getBtnAgregarCancion());
-                vista.aplicarEfectoBoton(vista.getBtnAgregarCarpeta());
-                vista.aplicarEfectoBoton(vista.getClasificar());
-                vista.aplicarEfectoBoton(vista.getBtnNuevaLista());
-                vista.aplicarEfectoBoton(vista.getBtnEliminarLista());
-                vista.aplicarEfectoBoton(vista.getBtnInvertir());
-                vista.aplicarEfectoBoton(vista.getBtnRenombrarListaSeleccionada());
-        //Configurar bucle de repeticion
+        vista.aplicarEfectoBoton(vista.getBtnEliminar());
+        vista.aplicarEfectoBoton(vista.getBtnAleatorio());
+        vista.aplicarEfectoBoton(vista.getBtnAgregarCancion());
+        vista.aplicarEfectoBoton(vista.getBtnAgregarCarpeta());
+        vista.aplicarEfectoBoton(vista.getClasificar());
+        vista.aplicarEfectoBoton(vista.getBtnNuevaLista());
+        vista.aplicarEfectoBoton(vista.getBtnEliminarLista());
+        vista.aplicarEfectoBoton(vista.getBtnInvertir());
+        vista.aplicarEfectoBoton(vista.getBtnRenombrarListaSeleccionada());
+        
+        // Configurar bucle de repetición
         vista.getBtnRepetirUna().selectedProperty().addListener((obs, oldVal, newVal) -> {
             actualizarEstiloBotonRepetir(newVal);
         });
@@ -174,7 +250,8 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
                 }
             }
         });
-        // Cargar listas iniciales
+        
+        // Cargar listas iniciales en el selector
         vista.getSelectorDeListas().getItems().addAll(gestor.getNombresDeListas());
         if (!vista.getSelectorDeListas().getItems().isEmpty()) {
             vista.getSelectorDeListas().setValue(vista.getSelectorDeListas().getItems().get(0));
@@ -184,7 +261,7 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
         // Configurar opciones de ordenamiento
         vista.getComboBoxOrdenar().setOnAction(e -> ordenador());
 
-        // Configurar opciones de filtrado
+        // Configurar búsqueda en tiempo real
         vista.getCampoBusqueda().textProperty().addListener((obs, oldVal, newVal) -> {
             buscarCancion();
         });
@@ -195,6 +272,7 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
     /* ***********************
      * OPERACIONES CON LISTAS
      * ***********************/
+
     /**
      * Crea una nueva lista de reproducción
      */
@@ -206,7 +284,7 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
 
         Optional<String> resultado = dialogo.showAndWait();
         resultado.ifPresent(nombre -> {
-            String nombreLimpio = nombre.trim(); // Elimina espacios en blanco al inicio y final
+            String nombreLimpio = nombre.trim();
             if (nombreLimpio.isEmpty()) {
                 vista.mostrarAlerta("El nombre de la lista no puede estar vacío.");
             } else if (!gestor.existeLista(nombreLimpio)) {
@@ -225,269 +303,258 @@ vista.getTablaCanciones().setOnMouseClicked(e -> {
     /**
      * Carga la lista seleccionada en la vista
      */
-private void cargarListaSeleccionada() {
-    String nombre = vista.getSelectorDeListas().getValue();
-    if (nombre != null) {
-        ListaReproduccion lista = gestor.getLista(nombre);
-        listaCompletaCanciones.clear();
+    private void cargarListaSeleccionada() {
+        String nombre = vista.getSelectorDeListas().getValue();
+        if (nombre != null) {
+            ListaReproduccion lista = gestor.getLista(nombre);
+            listaCompletaCanciones.clear();
 
-        if (lista != null) {
-            if (nombre.equals("Favoritos")) {
-                vista.getBtnAgregarCancion().setDisable(true);
-                vista.getBtnAgregarCarpeta().setDisable(true);
-                vista.getBtnEliminarLista().setDisable(true);
-                vista.getBtnFavorito().setDisable(true);
-                vista.getBtnmostrarFavoritos().setDisable(true);
-                vista.getBtnRenombrarListaSeleccionada().setDisable(true);
-                if (lista.vacia()) {
-                    vista.getBtnEliminar().setDisable(true);
-                }else{
-                    vista.getBtnEliminar().setDisable(false);
-                }
-            } else {
-                vista.getBtnAgregarCancion().setDisable(false);
-                vista.getBtnAgregarCarpeta().setDisable(false);
-                vista.getBtnEliminarLista().setDisable(false);
-                vista.getBtnFavorito().setDisable(false);
-                vista.getBtnmostrarFavoritos().setDisable(false);
-                vista.getBtnRenombrarListaSeleccionada().setDisable(false);
-                if(lista.vacia()){
+            if (lista != null) {
+                // Configurar estado de botones según el tipo de lista
+                if (nombre.equals("Favoritos")) {
+                    vista.getBtnAgregarCancion().setDisable(true);
+                    vista.getBtnAgregarCarpeta().setDisable(true);
+                    vista.getBtnEliminarLista().setDisable(true);
                     vista.getBtnFavorito().setDisable(true);
-                    vista.getBtnEliminar().setDisable(true);
-                }else{
-                vista.getBtnFavorito().setDisable(false);
-                vista.getBtnEliminar().setDisable(false);
-                    if (lista.getRutaCancion(vista.getNombrePresentacion().getText())==null) {
+                    vista.getBtnmostrarFavoritos().setDisable(true);
+                    vista.getBtnRenombrarListaSeleccionada().setDisable(true);
+                    vista.getBtnEliminar().setDisable(lista.vacia());
+                } else {
+                    vista.getBtnAgregarCancion().setDisable(false);
+                    vista.getBtnAgregarCarpeta().setDisable(false);
+                    vista.getBtnEliminarLista().setDisable(false);
+                    vista.getBtnFavorito().setDisable(false);
+                    vista.getBtnmostrarFavoritos().setDisable(false);
+                    vista.getBtnRenombrarListaSeleccionada().setDisable(false);
+                    
+                    boolean listaVacia = lista.vacia();
+                    vista.getBtnFavorito().setDisable(listaVacia);
+                    vista.getBtnEliminar().setDisable(listaVacia);
+                    
+                    if (!listaVacia && lista.getRutaCancion(vista.getNombrePresentacion().getText()) == null) {
                         vista.getBtnFavorito().setDisable(true);
-                    }else{
-                        vista.getBtnFavorito().setDisable(false);
                     }
                 }
-            }
-            
-            for (String nombreCancion : lista.getNombresCanciones()) {
-                String ruta = lista.getRutaCancion(nombreCancion);
-                String duracion = lista.obtenerDuracionLegible(ruta);
-                Cancion cancion = new Cancion(nombreCancion, duracion, ruta);
-                listaCompletaCanciones.add(cancion);
-            }
-        }
-
-        // Mostrar la lista completa
-        vista.getTablaCanciones().setItems(listaCompletaCanciones);
-        vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombre));
-        // Seleccionar y hacer scroll a la canción actual
-        String nombreActual = vista.getNombrePresentacion().getText();
-        Platform.runLater(() -> {
-            for (Cancion cancion : listaCompletaCanciones) {
-                if (cancion.getNombre().equals(nombreActual)) {
-                    vista.getTablaCanciones().getSelectionModel().select(cancion);
-                    vista.getTablaCanciones().scrollTo(cancion);
-                    break;
+                
+                // Cargar canciones en la lista completa
+                for (String nombreCancion : lista.getNombresCanciones()) {
+                    String ruta = lista.getRutaCancion(nombreCancion);
+                    String duracion = lista.obtenerDuracionLegible(ruta);
+                    listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
                 }
             }
-        });
+
+            // Mostrar la lista completa en la tabla
+            vista.getTablaCanciones().setItems(listaCompletaCanciones);
+            vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombre));
+            
+            // Seleccionar y hacer scroll a la canción actual
+            String nombreActual = vista.getNombrePresentacion().getText();
+            Platform.runLater(() -> {
+                for (Cancion cancion : listaCompletaCanciones) {
+                    if (cancion.getNombre().equals(nombreActual)) {
+                        vista.getTablaCanciones().getSelectionModel().select(cancion);
+                        vista.getTablaCanciones().scrollTo(cancion);
+                        break;
+                    }
+                }
+            });
+        }
     }
-}
 
     /**
      * Elimina la lista actualmente seleccionada
      */
-private void eliminarListaActual() {
-    String nombre = vista.getSelectorDeListas().getValue();
-    if (nombre != null) {
-        boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la lista: " + nombre + "? Esta acción no se puede deshacer.");
+    private void eliminarListaActual() {
+        String nombre = vista.getSelectorDeListas().getValue();
+        if (nombre != null) {
+            boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la lista: " + nombre + "? Esta acción no se puede deshacer.");
 
-        if (confirmado) {
-            Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-            if (seleccionada!=null) {
-                reproductor.detener();
-            vista.getBarraProgreso().setProgress(0);
-            vista.getNombrePresentacion().setText("");
-            vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
-            }
-            gestor.eliminarLista(nombre);
-            vista.getSelectorDeListas().getItems().remove(nombre);
-            vista.getTablaCanciones().getItems().clear();
+            if (confirmado) {
+                Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+                if (seleccionada != null) {
+                    reproductor.detener();
+                    vista.getBarraProgreso().setProgress(0);
+                    vista.getNombrePresentacion().setText("");
+                    vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
+                    vista.getTiempoTranscurridoLabel().setText("00:00");
+                    vista.getTiempoTotalLabel().setText("00:00");
+                }
+                
+                gestor.eliminarLista(nombre);
+                vista.getSelectorDeListas().getItems().remove(nombre);
+                vista.getTablaCanciones().getItems().clear();
 
-            if (!vista.getSelectorDeListas().getItems().isEmpty()) {
-                vista.getSelectorDeListas().setValue(vista.getSelectorDeListas().getItems().get(0));
-                cargarListaSeleccionada();
+                if (!vista.getSelectorDeListas().getItems().isEmpty()) {
+                    vista.getSelectorDeListas().setValue(vista.getSelectorDeListas().getItems().get(0));
+                    cargarListaSeleccionada();
+                } else {
+                    vista.mostrarAlerta("Ya no hay listas");
+                }
             } else {
-                vista.mostrarAlerta("Ya no hay listas");
+                vista.mostrarAlerta("Eliminación cancelada.");
             }
-        } else {
-            vista.mostrarAlerta("Eliminación cancelada.");
         }
     }
-}
     
     /**
      * Reordena la lista de reproducción según el nuevo orden en la tabla
      */
-public void sincronizarOrdenLista() {
-    String nombreLista = vista.getSelectorDeListas().getValue();
-    if (nombreLista == null) return;
+    public void sincronizarOrdenLista() {
+        String nombreLista = vista.getSelectorDeListas().getValue();
+        if (nombreLista == null) return;
 
-    ListaReproduccion lista = gestor.getLista(nombreLista);
-    if (lista == null) return;
+        ListaReproduccion lista = gestor.getLista(nombreLista);
+        if (lista == null) return;
 
-    // 1. Vaciar la lista actual
-    lista.vaciarLista();
+        // 1. Vaciar la lista actual
+        lista.vaciarLista();
 
-    // 2. Reconstruirla con el orden actual de la tabla
-    for (Cancion cancion : vista.getTablaCanciones().getItems()) {
-        lista.agregarCancion(cancion.getNombre(), cancion.getRuta());
+        // 2. Reconstruirla con el orden actual de la tabla
+        for (Cancion cancion : vista.getTablaCanciones().getItems()) {
+            lista.agregarCancion(cancion.getNombre(), cancion.getRuta());
+        }
+        gestor.guardarListas(ARCHIVO_LISTAS);
     }
-    gestor.guardarListas(ARCHIVO_LISTAS);
-}
     
     /**
      * Configura el listener para detectar cambios en el orden de la tabla
      */
-private void configurarListenerReordenamiento() {
-    vista.getTablaCanciones().getItems().addListener((ListChangeListener<Cancion>) change -> {
-        while (change.next()) {
-            if (change.wasPermutated() || change.wasReplaced() || change.wasUpdated()) {
-                Platform.runLater(() -> {
-                    sincronizarOrdenLista();
-                });
+    private void configurarListenerReordenamiento() {
+        vista.getTablaCanciones().getItems().addListener((ListChangeListener<Cancion>) change -> {
+            while (change.next()) {
+                if (change.wasPermutated() || change.wasReplaced() || change.wasUpdated()) {
+                    Platform.runLater(() -> {
+                        sincronizarOrdenLista();
+                    });
+                }
             }
-        }
-    });
-}
-
+        });
+    }
 
     /* ***********************
      * OPERACIONES CON CANCIONES
      * ***********************/
+
     /**
      * Agrega una canción desde el sistema de archivos
      */
-private void agregarCancionDesdeEscritorio() {
-    String nombreLista = vista.getSelectorDeListas().getValue();
-    if (nombreLista == null) {
-        vista.mostrarAlerta("Selecciona o crea una lista primero.");
-        return;
-    }
-
-    ListaReproduccion lista = gestor.getLista(nombreLista);
-    FileChooser fileChooser = new FileChooser();
-    fileChooser.setTitle("Seleccionar Canciones");
-    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Audio", "*.mp3", "*.wav", "*.m4a", "*.wma"));
-    List<File> archivos = fileChooser.showOpenMultipleDialog(vista.getPrimaryStage());
-
-    if (archivos != null) {
-        for (File archivo : archivos) {
-            String ruta = archivo.getAbsolutePath();
-            String nombreCancion = archivo.getName();
-            String duracion = lista.obtenerDuracionLegible(ruta);
-            // Agregar solo una vez a la lista de reproducción
-            if (lista.getRutaPorNombre(nombreCancion)!=null) {
-                vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
-                continue;
-            }
-            lista.agregarCancion(nombreCancion, ruta);
-            
-            // Crear la canción una sola vez
-            Cancion nuevaCancion = new Cancion(nombreCancion, duracion, ruta);
-            
-            // Agregar a ambas listas (la vista se actualizará automáticamente)
-            listaCompletaCanciones.add(nuevaCancion);
-            cargarListaSeleccionada();
+    private void agregarCancionDesdeEscritorio() {
+        String nombreLista = vista.getSelectorDeListas().getValue();
+        if (nombreLista == null) {
+            vista.mostrarAlerta("Selecciona o crea una lista primero.");
+            return;
         }
-        // Actualizar la búsqueda para reflejar los cambios
-        buscarCancion();
-    } else {
-        vista.mostrarAlerta("No se agregaron archivos de audio");
-    }
-}
 
-    /**
-     * Agrega todas las canciones de una carpeta
-     */
-private void agregarCancionesDesdeCarpeta() {
-    String nombreLista = vista.getSelectorDeListas().getValue();
-    if (nombreLista == null) {
-        vista.mostrarAlerta("Selecciona o crea una lista primero.");
-        return;
-    }
+        ListaReproduccion lista = gestor.getLista(nombreLista);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar Canciones");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos de Audio", "*.mp3", "*.wav", "*.m4a", "*.wma"));
+        List<File> archivos = fileChooser.showOpenMultipleDialog(vista.getPrimaryStage());
 
-    ListaReproduccion lista = gestor.getLista(nombreLista);
-    DirectoryChooser chooser = new DirectoryChooser();
-    chooser.setTitle("Seleccionar Carpeta de Canciones");
-    File carpeta = chooser.showDialog(vista.getPrimaryStage());
-
-    if (carpeta != null && carpeta.isDirectory()) {
-        for (File archivo : carpeta.listFiles()) {
-            if (archivo.isFile() && (archivo.getName().endsWith(".mp3")
-                    || archivo.getName().endsWith(".wav")
-                    || archivo.getName().endsWith(".m4a")) ){
-
+        if (archivos != null) {
+            for (File archivo : archivos) {
                 String ruta = archivo.getAbsolutePath();
                 String nombreCancion = archivo.getName();
                 String duracion = lista.obtenerDuracionLegible(ruta);
-                if (lista.getRutaPorNombre(nombreCancion)!=null) {
-                vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
-                continue;
+                
+                // Verificar si la canción ya existe en la lista
+                if (lista.getRutaPorNombre(nombreCancion) != null) {
+                    vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
+                    continue;
                 }
+                
                 lista.agregarCancion(nombreCancion, ruta);
                 listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
                 cargarListaSeleccionada();
             }
+            buscarCancion(); // Actualizar la búsqueda
+        } else {
+            vista.mostrarAlerta("No se agregaron archivos de audio");
         }
-    } else {
-        vista.mostrarAlerta("No se agregó alguna carpeta con archivos de audio");
     }
-}
+
+    /**
+     * Agrega todas las canciones de una carpeta
+     */
+    private void agregarCancionesDesdeCarpeta() {
+        String nombreLista = vista.getSelectorDeListas().getValue();
+        if (nombreLista == null) {
+            vista.mostrarAlerta("Selecciona o crea una lista primero.");
+            return;
+        }
+
+        ListaReproduccion lista = gestor.getLista(nombreLista);
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Seleccionar Carpeta de Canciones");
+        File carpeta = chooser.showDialog(vista.getPrimaryStage());
+
+        if (carpeta != null && carpeta.isDirectory()) {
+            for (File archivo : carpeta.listFiles()) {
+                if (archivo.isFile() && (archivo.getName().endsWith(".mp3")
+                        || archivo.getName().endsWith(".wav")
+                        || archivo.getName().endsWith(".m4a"))) {
+
+                    String ruta = archivo.getAbsolutePath();
+                    String nombreCancion = archivo.getName();
+                    String duracion = lista.obtenerDuracionLegible(ruta);
+                    
+                    if (lista.getRutaPorNombre(nombreCancion) != null) {
+                        vista.mostrarAlerta("La cancion ("+nombreCancion+") no se agrego por que ya existe en la lista ("+nombreLista+")");
+                        continue;
+                    }
+                    
+                    lista.agregarCancion(nombreCancion, ruta);
+                    listaCompletaCanciones.add(new Cancion(nombreCancion, duracion, ruta));
+                    cargarListaSeleccionada();
+                }
+            }
+        } else {
+            vista.mostrarAlerta("No se agregó alguna carpeta con archivos de audio");
+        }
+    }
 
     /* ***********************
      * CONTROL DE REPRODUCCIÓN
      * ***********************/
+
     /**
      * Reproduce la canción seleccionada
      */
-private void reproducirCancionSeleccionada() {
-    String listaActual = vista.getSelectorDeListas().getValue();
-    if (listaActual == null) {
-        vista.mostrarAlerta("No hay lista seleccionada");
-        return;
-    }
-    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-    if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
-        vista.getTablaCanciones().getSelectionModel().select(0);
-        seleccionada = vista.getTablaCanciones().getItems().get(0);
-    }
-    if(listaActual.equals("Favoritos")){
-        vista.getBtnFavorito().setDisable(true);
-    }else{
-         vista.getBtnFavorito().setDisable(false);
-    }
-    if (seleccionada != null) {
-        if(gestor.esFavorita(seleccionada)){
-            vista.getBtnFavorito().setSelected(true);
-        }else{
-        vista.getBtnFavorito().setSelected(false);
+    private void reproducirCancionSeleccionada() {
+        String listaActual = vista.getSelectorDeListas().getValue();
+        if (listaActual == null) {
+            vista.mostrarAlerta("No hay lista seleccionada");
+            return;
         }
-        try {
-            // Si ya había un reproductor activo, lo detenemos
-            reproductor.detener();
-            vista.getNombrePresentacion().setText(seleccionada.getNombre());
-            // Reiniciamos el Timeline si es necesario
-            inicializarTimelineSiNecesario();
-
-            // Iniciar reproducción de la nueva canción
-            reproductor.reproducir(seleccionada.getRuta());
-            mostrarPortada(seleccionada);
+        
+        Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+        if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
+            vista.getTablaCanciones().getSelectionModel().select(0);
+            seleccionada = vista.getTablaCanciones().getItems().get(0);
+        }
+        
+        // Configurar estado del botón de favoritos según la lista
+        vista.getBtnFavorito().setDisable(listaActual.equals("Favoritos"));
+        
+        if (seleccionada != null) {
+            vista.getBtnFavorito().setSelected(gestor.esFavorita(seleccionada));
             
-        } catch (Exception e) {
-            vista.mostrarAlerta("Error al reproducir: " + e.getMessage());
-            siguienteCancion();
+            try {
+                reproductor.detener();
+                vista.getNombrePresentacion().setText(seleccionada.getNombre());
+                inicializarTimelineSiNecesario();
+                reproductor.reproducir(seleccionada.getRuta());
+                mostrarPortada(seleccionada);
+            } catch (Exception e) {
+                vista.mostrarAlerta("Error al reproducir: " + e.getMessage());
+                siguienteCancion();
+            }
+        } else {
+            cargarListaSeleccionada();
+            vista.mostrarAlerta("No hay canciones en la lista");
         }
-    } else {
-        vista.mostrarAlerta("No hay canciones en la lista");
     }
-}
 
     /**
      * Reproduce una canción aleatoria de la lista
@@ -547,7 +614,6 @@ private void reproducirCancionSeleccionada() {
 
     /**
      * Cambia la canción (siguiente o anterior)
-     *
      * @param siguiente true para siguiente canción, false para anterior
      */
     private void cambiarCancion(boolean siguiente) {
@@ -561,19 +627,16 @@ private void reproducirCancionSeleccionada() {
         Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
 
         if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
-            // Si no hay selección pero hay canciones, seleccionar la primera
             vista.getTablaCanciones().getSelectionModel().select(0);
             seleccionada = vista.getTablaCanciones().getItems().get(0);
         }
 
         if (seleccionada != null) {
-            // Obtener el nombre de la siguiente/anterior canción usando la lista enlazada
             String nombreNueva = siguiente
                     ? lista.getSiguienteCancion(seleccionada.getNombre())
                     : lista.getCancionAnterior(seleccionada.getNombre());
 
             if (nombreNueva != null) {
-                // Buscar y seleccionar la canción en la TableView
                 for (int i = 0; i < vista.getTablaCanciones().getItems().size(); i++) {
                     if (vista.getTablaCanciones().getItems().get(i).getNombre().equals(nombreNueva)) {
                         vista.getTablaCanciones().getSelectionModel().select(i);
@@ -582,7 +645,6 @@ private void reproducirCancionSeleccionada() {
                     }
                 }
             } else {
-                // Si no hay siguiente/anterior, reproducir la primera/última
                 int index = siguiente ? 0 : vista.getTablaCanciones().getItems().size() - 1;
                 vista.getTablaCanciones().getSelectionModel().select(index);
                 reproducirCancionSeleccionada();
@@ -593,107 +655,106 @@ private void reproducirCancionSeleccionada() {
     /**
      * Detiene la reproducción actual
      */
-private void detenerReproduccion() {
-    reproductor.detener();  // Llama al detener real del Reproductor
-    vista.getBarraProgreso().setProgress(0);
-    vista.getTiempoTranscurridoLabel().setText("00:00");
-    vista.getTiempoTotalLabel().setText("00:00");
+    private void detenerReproduccion() {
+        reproductor.detener();
+        vista.getBarraProgreso().setProgress(0);
+        vista.getTiempoTranscurridoLabel().setText("00:00");
+        vista.getTiempoTotalLabel().setText("00:00");
 
-    if (actualizadorProgreso != null) {
-        actualizadorProgreso.stop();
+        if (actualizadorProgreso != null) {
+            actualizadorProgreso.stop();
+        }
     }
-}
-// Método auxiliar para reiniciar el Timeline si fue detenido
-private void inicializarTimelineSiNecesario() {
-    if (actualizadorProgreso == null) {
-        actualizadorProgreso = new Timeline(
+
+    /**
+     * Reinicia el Timeline si fue detenido
+     */
+    private void inicializarTimelineSiNecesario() {
+        if (actualizadorProgreso == null) {
+            actualizadorProgreso = new Timeline(
                 new KeyFrame(Duration.millis(100), e -> {
-                    if (reproductor.getMediaPlayer() != null && !vista.BarraProgresoPresionado()) {
+                    if (reproductor.getMediaPlayer() != null && !vista.barraProgresoPresionado()) {
                         vista.getBarraProgreso().setProgress(reproductor.getProgreso());
                         vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getCurrentTime()));
                         vista.getTiempoTotalLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getTotalDuration()));
                     }
                 })
-        );
-        actualizadorProgreso.setCycleCount(Animation.INDEFINITE);
-    } else if (actualizadorProgreso.getStatus() == Animation.Status.STOPPED) {
-        actualizadorProgreso.getKeyFrames().clear();
-        actualizadorProgreso.getKeyFrames().add(new KeyFrame(Duration.millis(100), e -> {
-            if (reproductor.getMediaPlayer() != null && !vista.BarraProgresoPresionado()) {
-                vista.getBarraProgreso().setProgress(reproductor.getProgreso());
-                vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getCurrentTime()));
-                vista.getTiempoTotalLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getTotalDuration()));
-            }
-        }));
-        actualizadorProgreso.setCycleCount(Animation.INDEFINITE);
+            );
+            actualizadorProgreso.setCycleCount(Animation.INDEFINITE);
+        } else if (actualizadorProgreso.getStatus() == Animation.Status.STOPPED) {
+            actualizadorProgreso.getKeyFrames().clear();
+            actualizadorProgreso.getKeyFrames().add(new KeyFrame(Duration.millis(100), e -> {
+                if (reproductor.getMediaPlayer() != null && !vista.barraProgresoPresionado()) {
+                    vista.getBarraProgreso().setProgress(reproductor.getProgreso());
+                    vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getCurrentTime()));
+                    vista.getTiempoTotalLabel().setText(reproductor.formatearTiempo(reproductor.getMediaPlayer().getTotalDuration()));
+                }
+            }));
+            actualizadorProgreso.setCycleCount(Animation.INDEFINITE);
+        }
+        actualizadorProgreso.play();
     }
-    actualizadorProgreso.play();
-}
 
     /**
      * Elimina la canción seleccionada
      */
-private void eliminarCancion() {
-    String nombreLista = vista.getSelectorDeListas().getValue();
-    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+    private void eliminarCancion() {
+        String nombreLista = vista.getSelectorDeListas().getValue();
+        Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
 
-    if (nombreLista != null && seleccionada != null) {
-        boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la canción: " + seleccionada.getNombre() + "?");
+        if (nombreLista != null && seleccionada != null) {
+            boolean confirmado = vista.mostrarConfirmacion("¿Deseas eliminar la canción: " + seleccionada.getNombre() + "?");
 
-        if (!confirmado) {
-            vista.mostrarAlerta("Eliminación cancelada.");
-            return;
-        }
-
-        ListaReproduccion lista = gestor.getLista(nombreLista);
-        ObservableList<Cancion> canciones = vista.getTablaCanciones().getItems();
-        int indiceActual = canciones.indexOf(seleccionada);
-
-        boolean esLaCancionActual = false;
-
-        if (reproductor.getMediaPlayer() != null) {
-            String rutaReproductor = reproductor.getMediaPlayer().getMedia().getSource();
-            String rutaCancionSeleccionada = new File(seleccionada.getRuta()).toURI().toString();
-            esLaCancionActual = rutaReproductor.equals(rutaCancionSeleccionada);
-        }
-
-        if (lista.eliminarCancion(seleccionada.getNombre())) {
-            canciones.remove(seleccionada);
-            vista.getNombrePresentacion().setText("");
-            listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
-            buscarCancion();
-vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombreLista));
-            if (esLaCancionActual) {
-                reproductor.detener();
-                vista.getBarraProgreso().setProgress(0);
-                vista.getTiempoTranscurridoLabel().setText("00:00");
-                vista.getTiempoTotalLabel().setText("00:00");
-                
-                // Reproducir la siguiente canción si existe
-                if (!canciones.isEmpty()) {
-                    vista.getBtnEliminar().setDisable(false);
-                    // Si el índice eliminado está dentro del rango, reproducir la que sigue
-                    if (indiceActual >= canciones.size()) {
-                        indiceActual = canciones.size() - 1; // en caso de que se haya eliminado la última
-                    }
-
-                    Cancion siguiente = canciones.get(indiceActual);
-                    vista.getTablaCanciones().getSelectionModel().select(siguiente);
-                        reproducirCancionSeleccionada();
-                }else{
-                   vista.getBtnEliminar().setDisable(true); 
-                }
+            if (!confirmado) {
+                vista.mostrarAlerta("Eliminación cancelada.");
+                return;
             }
 
+            ListaReproduccion lista = gestor.getLista(nombreLista);
+            ObservableList<Cancion> canciones = vista.getTablaCanciones().getItems();
+            int indiceActual = canciones.indexOf(seleccionada);
+
+            boolean esLaCancionActual = false;
+
+            if (reproductor.getMediaPlayer() != null) {
+                String rutaReproductor = reproductor.getMediaPlayer().getMedia().getSource();
+                String rutaCancionSeleccionada = new File(seleccionada.getRuta()).toURI().toString();
+                esLaCancionActual = rutaReproductor.equals(rutaCancionSeleccionada);
+            }
+
+            if (lista.eliminarCancion(seleccionada.getNombre())) {
+                canciones.remove(seleccionada);
+                vista.getNombrePresentacion().setText("");
+                listaCompletaCanciones.removeIf(c -> c.getNombre().equals(seleccionada.getNombre()));
+                buscarCancion();
+                vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             Total: "+ gestor.nroDeMusicasEn(nombreLista));
+                
+                if (esLaCancionActual) {
+                    reproductor.detener();
+                    vista.getBarraProgreso().setProgress(0);
+                    vista.getTiempoTranscurridoLabel().setText("00:00");
+                    vista.getTiempoTotalLabel().setText("00:00");
+                    
+                    if (!canciones.isEmpty()) {
+                        vista.getBtnEliminar().setDisable(false);
+                        if (indiceActual >= canciones.size()) {
+                            indiceActual = canciones.size() - 1;
+                        }
+
+                        Cancion siguiente = canciones.get(indiceActual);
+                        vista.getTablaCanciones().getSelectionModel().select(siguiente);
+                        reproducirCancionSeleccionada();
+                    } else {
+                       vista.getBtnEliminar().setDisable(true); 
+                    }
+                }
+            } else {
+                vista.mostrarAlerta("No se pudo eliminar la canción.");
+            }
         } else {
-            vista.mostrarAlerta("No se pudo eliminar la canción.");
+            vista.mostrarAlerta("Por favor, selecciona una canción para eliminar.");
         }
-    } else {
-        vista.mostrarAlerta("Por favor, selecciona una canción para eliminar.");
     }
-}
-
-
 
     /**
      * Activa/desactiva el modo de repetición para la canción actual
@@ -703,7 +764,6 @@ vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             T
         reproductor.setModoRepeticion(repetir);
         actualizarEstiloBotonRepetir(repetir);
 
-        // Configurar el manejador de fin de reproducción solo una vez
         if (reproductor.getMediaPlayer() != null) {
             reproductor.getMediaPlayer().setOnEndOfMedia(() -> {
                 Platform.runLater(() -> {
@@ -728,6 +788,7 @@ vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             T
     /* ***********************
      * ORDENAMIENTO BÚSQUEDA Y FILTRADO
      * ***********************/
+
     /**
      * Ordena por lo que requiera el usuario
      */
@@ -755,7 +816,6 @@ vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             T
                 break;
         }
 
-        // Actualizar la vista
         cargarListaSeleccionada();
     }
 
@@ -766,22 +826,20 @@ vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             T
         String textoBusqueda = vista.getCampoBusqueda().getText().trim().toLowerCase();
 
         if (textoBusqueda.isEmpty()) {
-            // Mostrar toda la lista si no hay texto de búsqueda
             vista.getTablaCanciones().setItems(listaCompletaCanciones);
         } else {
-            // Filtrar contra la lista completa
             ObservableList<Cancion> resultados = listaCompletaCanciones.stream()
-                    .filter(cancion -> cancion.getNombre().toLowerCase().contains(textoBusqueda))
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
+                .filter(cancion -> cancion.getNombre().toLowerCase().contains(textoBusqueda))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
             vista.getTablaCanciones().setItems(resultados);
         }
     }
 
-
     /* ***********************
      * OPERACIONES ADICIONALES
      * ***********************/
+
     /**
      * Invierte el orden de la lista actual
      */
@@ -809,290 +867,329 @@ vista.getTablaCanciones().getVisibleLeafColumn(0).setText("Cancion             T
         barra.setOnMousePressed(event -> {
             if (reproductor.getMediaPlayer() != null) {
                 double progreso = event.getX() / barra.getWidth();
-                progreso = Math.max(0, Math.min(1, progreso)); // Asegurar rango 0-1
+                progreso = Math.max(0, Math.min(1, progreso));
                 Duration nuevaPosicion = reproductor.getMediaPlayer().getTotalDuration().multiply(progreso);
-                System.out.println("Nuevaposciocion: "+nuevaPosicion);
                 reproductor.getMediaPlayer().seek(nuevaPosicion);
-                
-System.out.println("Nuevaposciocion formateada: "+reproductor.formatearTiempo(nuevaPosicion));
-                // Actualizar UI inmediatamente
                 vista.getBarraProgreso().setProgress(progreso);
                 vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(nuevaPosicion));
             }
         });
 
-        // Manejar arrastre
+        //Manejar arrastre
         barra.setOnMouseDragged(event -> {
-            if (reproductor.getMediaPlayer() != null) {
+          if (reproductor.getMediaPlayer() != null) {
                 double progreso = event.getX() / barra.getWidth();
-                progreso = Math.max(0, Math.min(1, progreso)); // Asegurar rango 0-1
-
-                // Actualizar posición del reproductor durante arrastre
+                progreso = Math.max(0, Math.min(1, progreso));
                 Duration nuevaPosicion = reproductor.getMediaPlayer().getTotalDuration().multiply(progreso);
                 reproductor.getMediaPlayer().seek(nuevaPosicion);
-
-                // Actualizar UI durante arrastre
                 vista.getBarraProgreso().setProgress(progreso);
                 vista.getTiempoTranscurridoLabel().setText(reproductor.formatearTiempo(nuevaPosicion));
             }
         });
     }
     
-/**
- * Guarda la sesión actual (canción, posición, volumen, etc.)
- */
-private void guardarSesion() {
-    Cancion cancionSeleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-    if (reproductor.getMediaPlayer() != null && cancionSeleccionada != null) {
-        String listaActual = vista.getSelectorDeListas().getValue();
-        Duration tiempo = reproductor.getMediaPlayer().getCurrentTime();
-        double volumen = reproductor.getVolumenActual();
-        boolean reproduciendo = reproductor.getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING;
-        boolean pausado = reproductor.getMediaPlayer().getStatus() == MediaPlayer.Status.PAUSED;
+    /**
+     * Guarda la sesión actual (canción, posición, volumen, etc.)
+     */
+    private void guardarSesion() {
+        Cancion cancionSeleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+        if (reproductor.getMediaPlayer() != null && cancionSeleccionada != null) {
+            String listaActual = vista.getSelectorDeListas().getValue();
+            Duration tiempo = reproductor.getMediaPlayer().getCurrentTime();
+            double volumen = reproductor.getVolumenActual();
+            boolean reproduciendo = reproductor.getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING;
+            boolean pausado = reproductor.getMediaPlayer().getStatus() == MediaPlayer.Status.PAUSED;
 
-        sesionGuardada = new SesionGuardada(
-            listaActual,
-            cancionSeleccionada.getNombre(),
-            tiempo.toMillis(),
-            volumen,
-            reproduciendo,
-            pausado
+            sesionGuardada = new SesionGuardada(
+                listaActual,
+                cancionSeleccionada.getNombre(),
+                tiempo.toMillis(),
+                volumen,
+                reproduciendo,
+                pausado
+            );
+
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(ARCHIVO_SESION))) {
+                out.writeObject(sesionGuardada);
+            } catch (IOException e) {
+                System.out.println("Error al guardar la sesión: " + e.getMessage());
+            }
+        }else{
+            String listaActual = vista.getSelectorDeListas().getValue();
+            double volumen = reproductor.getVolumenActual();
+            sesionGuardada = new SesionGuardada(
+                listaActual,
+                "",
+                0,
+                volumen,
+                false,
+                false
+            );
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(ARCHIVO_SESION))) {
+                out.writeObject(sesionGuardada);
+            } catch (IOException e) {
+                System.out.println("Error al guardar la sesión: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Carga la sesión guardada si existe
+     */
+    private void cargarSesion() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(ARCHIVO_SESION))) {
+            sesionGuardada = (SesionGuardada) in.readObject();
+            if (sesionGuardada != null && gestor.existeLista(sesionGuardada.getListaActual())) {
+                vista.getSelectorDeListas().setValue(sesionGuardada.getListaActual());
+                vista.getNombrePresentacion().setText(sesionGuardada.getCancionActual());
+                cargarListaSeleccionada();
+
+                // Seleccionar la canción que estaba sonando
+                for (Cancion cancion : vista.getTablaCanciones().getItems()) {
+                    if (cancion.getNombre().equals(sesionGuardada.getCancionActual())) {
+                        vista.getTablaCanciones().getSelectionModel().select(cancion);
+                        vista.getTablaCanciones().scrollTo(cancion);
+                        mostrarPortada(cancion);
+                        break;
+                    }
+                }
+
+                // Reproducir la canción y ajustar posición/volumen
+                if (vista.getTablaCanciones().getSelectionModel().getSelectedItem() != null) {
+                    Cancion cancion = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+                    if(gestor.esFavorita(cancion)){
+                        vista.getBtnFavorito().setSelected(true);
+                    }else{
+                        vista.getBtnFavorito().setSelected(false);
+                    }
+                    reproductor.reproducir(cancion.getRuta());
+                    vista.getNombrePresentacion().setText(cancion.getNombre());
+                    
+                    if (reproductor.getMediaPlayer() != null) {
+                        reproductor.getMediaPlayer().setOnReady(() -> {
+                            reproductor.setPosicion(Duration.millis(sesionGuardada.getTiempoTranscurrido()));
+                            reproductor.setVolumen(sesionGuardada.getVolumen());
+
+                            if (sesionGuardada.isPausado()) {
+                                reproductor.pausar();
+                            } else if (sesionGuardada.isReproduciendo()) {
+                                reproductor.getMediaPlayer().play();
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("No hay sesión guardada o error al cargar: " + e.getMessage());
+            vista.getBarraProgreso().setProgress(0);
+        }
+    }
+
+    /**
+     * Clasifica canciones por metadatos (género/artista)
+     */
+    public void clasificarCancionPorMetadatos(Stage stage) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar canciones para clasificar");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Archivos de Audio", "*.mp3", "*.m4a", "*.wav")
         );
 
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(ARCHIVO_SESION))) {
-            out.writeObject(sesionGuardada);
-        } catch (IOException e) {
-            System.out.println("Error al guardar la sesión: " + e.getMessage());
-        }
-    }
-}
-    
-/**
- * Carga la sesión guardada si existe
- */
-private void cargarSesion() {
-    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(ARCHIVO_SESION))) {
-        sesionGuardada = (SesionGuardada) in.readObject();
-        if (sesionGuardada != null && gestor.existeLista(sesionGuardada.getListaActual())) {
-            vista.getSelectorDeListas().setValue(sesionGuardada.getListaActual());
-            vista.getNombrePresentacion().setText(sesionGuardada.getCancionActual());
-            cargarListaSeleccionada();
+        List<File> archivos = fileChooser.showOpenMultipleDialog(stage);
+        if (archivos == null || archivos.isEmpty()) return;
 
-            // Seleccionar la canción que estaba sonando
-            for (Cancion cancion : vista.getTablaCanciones().getItems()) {
-                if (cancion.getNombre().equals(sesionGuardada.getCancionActual())) {
-                    vista.getTablaCanciones().getSelectionModel().select(cancion);
-                    vista.getTablaCanciones().scrollTo(cancion);
-                    mostrarPortada(cancion);
-                    break;
-                }
-            }
+        for (File archivo : archivos) {
+            try {
+                javafx.scene.media.Media media = new javafx.scene.media.Media(archivo.toURI().toString());
+                final boolean[] procesado = {false};
 
-// Reproducir la canción y ajustar posición/volumen
-if (vista.getTablaCanciones().getSelectionModel().getSelectedItem() != null) {
-    Cancion cancion = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-        if(gestor.esFavorita(cancion)){
-            vista.getBtnFavorito().setSelected(true);
-        }else{
-        vista.getBtnFavorito().setSelected(false);
-        }
-    reproductor.reproducir(cancion.getRuta());
-    vista.getNombrePresentacion().setText(cancion.getNombre());
-    // Esperar a que el MediaPlayer esté listo para configurar la posición
-    if (reproductor.getMediaPlayer() != null) {
-        reproductor.getMediaPlayer().setOnReady(() -> {
-            reproductor.setPosicion(Duration.millis(sesionGuardada.getTiempoTranscurrido()));
-            reproductor.setVolumen(sesionGuardada.getVolumen());
+                media.getMetadata().addListener((MapChangeListener<String, Object>) cambio -> {
+                    if (cambio.wasAdded() && !procesado[0]) {
+                        procesado[0] = true;
 
-            if (sesionGuardada.isPausado()) {
-                reproductor.pausar();
-            } else if (sesionGuardada.isReproduciendo()) {
-                reproductor.getMediaPlayer().play();  // Reanudar con play()
-            }
-        });
-    }
-}
-        }
-    } catch (Exception e) {
-        System.out.println("No hay sesión guardada o error al cargar: " + e.getMessage());
-    }
-}
-//Anghelo
-public void clasificarCancionPorMetadatos(Stage stage) {
-    FileChooser fileChooser = new FileChooser();
-    fileChooser.setTitle("Seleccionar canciones para clasificar");
-    fileChooser.getExtensionFilters().addAll(
-        new FileChooser.ExtensionFilter("Archivos de Audio", "*.mp3", "*.m4a", "*.wav")
-    );
+                        Platform.runLater(() -> {
+                            String titulo = (String) media.getMetadata().get("title");
+                            String artista = (String) media.getMetadata().get("artist");
+                            String genero = (String) media.getMetadata().get("genre");
 
-    List<File> archivos = fileChooser.showOpenMultipleDialog(stage);
-    if (archivos == null || archivos.isEmpty()) return;
-
-    for (File archivo : archivos) {
-        try {
-            javafx.scene.media.Media media = new javafx.scene.media.Media(archivo.toURI().toString());
-
-            final boolean[] procesado = {false};  // bandera para evitar múltiples ejecuciones
-
-            media.getMetadata().addListener((MapChangeListener<String, Object>) cambio -> {
-                if (cambio.wasAdded() && !procesado[0]) {
-                    procesado[0] = true;
-
-                    Platform.runLater(() -> {
-                        String titulo = (String) media.getMetadata().get("title");
-                        String artista = (String) media.getMetadata().get("artist");
-                        String genero = (String) media.getMetadata().get("genre");
-
-                        String nombreLista = (genero != null && !genero.trim().isEmpty()) ? genero : artista;
-                        if (nombreLista == null || nombreLista.trim().isEmpty()) {
-                            nombreLista = "Desconocido";
-                        }
-
-                        boolean esNuevaLista = false;
-
-                        if (!gestor.existeLista(nombreLista)) {
-                            gestor.crearLista(nombreLista);
-                            vista.getSelectorDeListas().getItems().add(nombreLista);
-                            esNuevaLista = true;
-                        }
-
-                        if (!gestor.existeCancionEnLista(nombreLista, archivo.getAbsolutePath())) {
-                            gestor.agregarCancionALista(
-                                nombreLista,
-                                (titulo != null ? titulo : archivo.getName()),
-                                archivo.getAbsolutePath()
-                            );
-
-                            if (nombreLista.equals(vista.getSelectorDeListas().getValue())) {
-                                String duracion = gestor.getLista(nombreLista).obtenerDuracionLegible(archivo.getAbsolutePath());
-                                vista.getTablaCanciones().getItems().add(
-                                    new Cancion(
-                                        (titulo != null ? titulo : archivo.getName()),
-                                        duracion,
-                                        archivo.getAbsolutePath()
-                                    )
-                                );
+                            String nombreLista = (genero != null && !genero.trim().isEmpty()) ? genero : artista;
+                            if (nombreLista == null || nombreLista.trim().isEmpty()) {
+                                nombreLista = "Desconocido";
                             }
-                        }
 
-                        if (esNuevaLista) {
-                            vista.mostrarAlerta("Se creó la lista: " + nombreLista + " y se agregó la canción.");
-                        }
-                    });
-                }
-            });
+                            boolean esNuevaLista = false;
 
-        } catch (Exception e) {
-            vista.mostrarAlerta("Error al leer metadatos de: " + archivo.getName() + "\n" + e.getMessage());
+                            if (!gestor.existeLista(nombreLista)) {
+                                gestor.crearLista(nombreLista);
+                                vista.getSelectorDeListas().getItems().add(nombreLista);
+                                esNuevaLista = true;
+                            }
+
+                            if (!gestor.existeCancionEnLista(nombreLista, archivo.getAbsolutePath())) {
+                                gestor.agregarCancionALista(
+                                    nombreLista,
+                                    (titulo != null ? titulo : archivo.getName()),
+                                    archivo.getAbsolutePath()
+                                );
+
+                                if (nombreLista.equals(vista.getSelectorDeListas().getValue())) {
+                                    String duracion = gestor.getLista(nombreLista).obtenerDuracionLegible(archivo.getAbsolutePath());
+                                    vista.getTablaCanciones().getItems().add(
+                                        new Cancion(
+                                            (titulo != null ? titulo : archivo.getName()),
+                                            duracion,
+                                            archivo.getAbsolutePath()
+                                        )
+                                    );
+                                }
+                            }
+
+                            if (esNuevaLista) {
+                                vista.mostrarAlerta("Se creó la lista: " + nombreLista + " y se agregó la canción.");
+                            }
+                        });
+                    }
+                });
+
+            } catch (Exception e) {
+                vista.mostrarAlerta("Error al leer metadatos de: " + archivo.getName() + "\n" + e.getMessage());
+            }
         }
     }
-}
-//Favoritos
-public void favorito (){
-    String listaActual = vista.getSelectorDeListas().getValue();
-    if (listaActual == null) {
-        vista.mostrarAlerta("No hay lista seleccionada");
-        return;
-    }
-    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-    if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
-        vista.mostrarAlerta("Selecciona una cancion para agregar");
-        vista.getBtnFavorito().setSelected(false);
-        return;
-    }
-    if(vista.getBtnFavorito().isSelected()){
-        System.out.println("esta pulsada");
-        PopBurbuja.play();
-        gestor.agregarFav(seleccionada);
-    }else{
-        System.out.println("No esta pulsada");
-        gestor.eliminarFav(seleccionada);
-    }
-}
 
-public void mostrarFavoritos() {
-    vista.getSelectorDeListas().getSelectionModel().select("Favoritos");
-}
-public void reproducirAlTocar() {
-    Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
-    if (seleccionada != null) {
-        reproducirCancionSeleccionada();
+    /**
+     * Maneja la marcación/desmarcación de favoritos
+     */
+    public void favorito() {
+        String listaActual = vista.getSelectorDeListas().getValue();
+        if (listaActual == null) {
+            vista.mostrarAlerta("No hay lista seleccionada");
+            return;
+        }
+        
+        Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+        if (seleccionada == null && !vista.getTablaCanciones().getItems().isEmpty()) {
+            vista.mostrarAlerta("Selecciona una cancion para agregar");
+            vista.getBtnFavorito().setSelected(false);
+            return;
+        }
+        
+        if(vista.getBtnFavorito().isSelected()) {
+            PopBurbuja.play();
+            gestor.agregarFav(seleccionada);
+        } else {
+            gestor.eliminarFav(seleccionada);
+        }
     }
-}
-public void mostrarPortada(Cancion cancion){
-    String nombre = vista.getSelectorDeListas().getValue();
-    ListaReproduccion lista = gestor.getLista(nombre);
-    if(lista.obtenerPortada(cancion.getRuta())==null){
-        vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
-    }else{
-        vista.getImagePortada().setImage(lista.obtenerPortada(cancion.getRuta()));
+
+    /**
+     * Muestra la lista de favoritos
+     */
+    public void mostrarFavoritos() {
+        vista.getSelectorDeListas().getSelectionModel().select("Favoritos");
     }
-}
+
+    /**
+     * Reproduce la canción al tocarla en la tabla
+     */
+    public void reproducirAlTocar() {
+        Cancion seleccionada = vista.getTablaCanciones().getSelectionModel().getSelectedItem();
+        if (seleccionada != null) {
+            reproducirCancionSeleccionada();
+        }
+    }
+
+    /**
+     * Muestra la portada del álbum si está disponible
+     */
+    public void mostrarPortada(Cancion cancion) {
+        String nombre = vista.getSelectorDeListas().getValue();
+        ListaReproduccion lista = gestor.getLista(nombre);
+        if(lista.obtenerPortada(cancion.getRuta()) == null) {
+            vista.getImagePortada().setImage(new Image("/resources/imagenes/disco-de-musica-con-nota-musical.png"));
+        } else {
+            vista.getImagePortada().setImage(lista.obtenerPortada(cancion.getRuta()));
+        }
+    }
+
+    /**
+     * Activa/desactiva el modo oscuro
+     */
     private void modoOscuro() {
-
-            if (vista.getBtnModoOscuro().isSelected()) {
-                activarModoOscuro();
-            } else {
-                activarModoClaro();
-            }
-
+        if (vista.getBtnModoOscuro().isSelected()) {
+            activarModoOscuro();
+        } else {
+            activarModoClaro();
+        }
     }
 
+    /**
+     * Configura la interfaz en modo oscuro
+     */
     private void activarModoOscuro() {
         vista.getRoot().setStyle("-fx-background-color: #888888;");
         vista.getNombrePresentacion().setStyle("-fx-text-fill: white;");
-vista.getTablaCanciones().setStyle("-fx-control-inner-background: #424242;");
-vista.getCampoBusqueda().setStyle("-fx-background-color: #424242; -fx-text-fill: white;");
-vista.getComboBoxOrdenar().setStyle("-fx-background-color: #BFBFBF;");
-vista.getSelectorDeListas().setStyle("-fx-background-color: #BFBFBF;");
-vista.getBtnModoOscuro().setText("☀ Modo Claro");
-vista.getBtnModoOscuro().setStyle(
-    "-fx-background-color: transparent;" + "-fx-text-fill: white;" + "-fx-border-color: transparent;"      
-);
+        vista.getTablaCanciones().setStyle("-fx-control-inner-background: #424242;");
+        vista.getCampoBusqueda().setStyle("-fx-background-color: #424242; -fx-text-fill: white;");
+        vista.getComboBoxOrdenar().setStyle("-fx-background-color: #BFBFBF;");
+        vista.getSelectorDeListas().setStyle("-fx-background-color: #BFBFBF;");
+        vista.getBtnModoOscuro().setText("☀ Modo Claro");
+        vista.getBtnModoOscuro().setStyle(
+            "-fx-background-color: transparent;" + 
+            "-fx-text-fill: white;" + 
+            "-fx-border-color: transparent;"      
+        );
     }
 
+    /**
+     * Configura la interfaz en modo claro
+     */
     private void activarModoClaro() {
         vista.getRoot().setStyle("-fx-background-color:  #e9eef2;");
         vista.getNombrePresentacion().setStyle("-fx-text-fill: black;");
-vista.getTablaCanciones().setStyle("-fx-control-inner-background: white;");
-vista.getCampoBusqueda().setStyle(",-fx-background-color: #94b3c8;");
-vista.getComboBoxOrdenar().setStyle("-fx-background-color: #94b3c8;");
-vista.getSelectorDeListas().setStyle("-fx-background-color: #a4d7f4;");
-    vista.getBtnModoOscuro().setText("🌙 Modo Oscuro");
-    vista.getBtnModoOscuro().setStyle(
-    "-fx-background-color: transparent;" + "-fx-text-fill: black;" + "-fx-border-color: transparent;"      
-);
-}
-private void renombrarListaSeleccionada() {
-    String nombreActual = vista.getSelectorDeListas().getValue(); // Nombre actual
-    
-    if (nombreActual != null) {
-        TextInputDialog dialogo = new TextInputDialog(nombreActual);
-        
-        dialogo.setTitle("Renombrar Lista");
-        dialogo.setHeaderText("Cambiar el nombre de la lista");
-        dialogo.setContentText("Nuevo nombre:");
-
-        Optional<String> resultado = dialogo.showAndWait();
-        resultado.ifPresent(nuevoNombre -> {
-            nuevoNombre = nuevoNombre.trim();
-            if (!nuevoNombre.isEmpty() && !nuevoNombre.equals(nombreActual)) {
-                if (!gestor.existeLista(nuevoNombre)) {
-                    gestor.renombrarLista(nombreActual, nuevoNombre);
-                    ObservableList<String> items = vista.getSelectorDeListas().getItems();
-                    int index = items.indexOf(nombreActual);
-                    if (index != -1) {
-                        items.set(index, nuevoNombre);
-                    }
-                    vista.getSelectorDeListas().setValue(nuevoNombre);
-                }else{
-                    vista.mostrarAlerta("Ya existe una lista con este nombre");
-                }
-            }else{
-                vista.mostrarAlerta("Selecciona un nuevo nombre no vacio y no existente");
-            }
-        });
+        vista.getTablaCanciones().setStyle("-fx-control-inner-background: white;");
+        vista.getCampoBusqueda().setStyle(",-fx-background-color: #94b3c8;");
+        vista.getComboBoxOrdenar().setStyle("-fx-background-color: #94b3c8;");
+        vista.getSelectorDeListas().setStyle("-fx-background-color: #a4d7f4;");
+        vista.getBtnModoOscuro().setText("🌙 Modo Oscuro");
+        vista.getBtnModoOscuro().setStyle(
+            "-fx-background-color: transparent;" + 
+            "-fx-text-fill: black;" + 
+            "-fx-border-color: transparent;"      
+        );
     }
-}    
 
+    /**
+     * Renombra la lista seleccionada
+     */
+    private void renombrarListaSeleccionada() {
+        String nombreActual = vista.getSelectorDeListas().getValue();
+        
+        if (nombreActual != null) {
+            TextInputDialog dialogo = new TextInputDialog(nombreActual);
+            dialogo.setTitle("Renombrar Lista");
+            dialogo.setHeaderText("Cambiar el nombre de la lista");
+            dialogo.setContentText("Nuevo nombre:");
+
+            Optional<String> resultado = dialogo.showAndWait();
+            resultado.ifPresent(nuevoNombre -> {
+                nuevoNombre = nuevoNombre.trim();
+                if (!nuevoNombre.isEmpty() && !nuevoNombre.equals(nombreActual)) {
+                    if (!gestor.existeLista(nuevoNombre)) {
+                        gestor.renombrarLista(nombreActual, nuevoNombre);
+                        ObservableList<String> items = vista.getSelectorDeListas().getItems();
+                        int index = items.indexOf(nombreActual);
+                        if (index != -1) {
+                            items.set(index, nuevoNombre);
+                        }
+                        vista.getSelectorDeListas().setValue(nuevoNombre);
+                    } else {
+                        vista.mostrarAlerta("Ya existe una lista con este nombre");
+                    }
+                } else {
+                    vista.mostrarAlerta("Selecciona un nuevo nombre no vacio y no existente");
+                }
+            });
+        }
+    }
 }

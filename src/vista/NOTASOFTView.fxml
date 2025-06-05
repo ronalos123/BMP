@@ -217,9 +217,9 @@
                <children>
                       <Button fx:id="btnAnterior" contentDisplay="TOP" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
                      <graphic>
-                        <ImageView fitHeight="30.0" fitWidth="30.0" nodeOrientation="RIGHT_TO_LEFT" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="30.0" fitWidth="30.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../resources/imagenes/siguiente.png" />
+                              <Image url="@../resources/imagenes/Anterior.png" />
                            </image>
                         </ImageView>
                      </graphic>
@@ -261,7 +261,7 @@
                      <graphic>
                         <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../resources/imagenes/siguiente.png" />
+                              <Image url="@../resources/imagenes/Siguiente.png" />
                            </image>
                         </ImageView>
                      </graphic>
@@ -271,7 +271,7 @@
             <HBox alignment="CENTER" prefHeight="67.0" prefWidth="334.0" spacing="10.0">
                <children>
                       <Label fx:id="tiempoTranscurridoLabel" text="00:00" />
-                      <ProgressBar fx:id="barraProgreso" cache="true" prefHeight="18.0" prefWidth="216.0" progress="0" style="-fx-accent: #2196F3; -fx-control-inner-background: #E0E0E0; -fx-pref-height: 15px; -fx-cursor: hand;" />
+                      <ProgressBar fx:id="barraProgreso" cache="true" maxHeight="15.0" maxWidth="250.0" minHeight="15.0" minWidth="250.0" prefHeight="15.0" prefWidth="250.0" progress="1.0" style="-fx-accent: #94b3c8; -fx-control-inner-background: #E0E0E0; -fx-pref-height: 15px; -fx-cursor: hand;" />
                       <Label fx:id="tiempoTotalLabel" text="00:00" />
                </children>
             </HBox>

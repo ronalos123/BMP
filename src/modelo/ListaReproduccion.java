@@ -5,57 +5,45 @@ package modelo;
  * canciones. Permite agregar, eliminar, buscar y ordenar canciones, así como
  * obtener metadatos de los archivos de audio usando la biblioteca JAudioTagger.
  */
+
 import java.io.ByteArrayInputStream;
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
-import java.util.Comparator;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javafx.scene.image.Image;
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.images.Artwork;
 
 public class ListaReproduccion implements Serializable {
 
-    private static final long serialVersionUID = 1L; // Para compatibilidad en serialización
+    private static final long serialVersionUID = 1L; // Para compatibilidad con la serialización
 
-    private Nodo cabeza; // Referencia al primer nodo de la lista
+    private Nodo cabeza;                // Referencia al primer nodo de la lista
+    private List<Cancion> canciones;    // Lista auxiliar (no enlazada) de canciones
 
-    /**
-     * Constructor - Inicializa una lista vacía
-     */
+    // Constructor: Inicializa la lista vacía
     public ListaReproduccion() {
         cabeza = null;
     }
 
-    /* ***********************
-     * OPERACIONES BÁSICAS
-     * ***********************/
-    /**
-     * Obtiene el primer nodo de la lista
-     *
-     * @return Nodo cabeza de la lista
-     */
+    /* ========================
+     *  MÉTODOS BÁSICOS
+     * ======================== */
+
     public Nodo getCabeza() {
         return cabeza;
     }
 
-    /**
-     * Verifica si la lista está vacía
-     *
-     * @return true si está vacía, false si no
-     */
     public boolean vacia() {
         return cabeza == null;
     }
 
     /**
-     * Obtiene todos los nombres de canciones en la lista
-     *
-     * @return Lista de nombres de canciones
+     * Retorna los nombres de todas las canciones de la lista.
      */
     public List<String> getNombresCanciones() {
         List<String> nombresCanciones = new ArrayList<>();
@@ -68,10 +56,7 @@ public class ListaReproduccion implements Serializable {
     }
 
     /**
-     * Busca la ruta de una canción por su nombre
-     *
-     * @param nombreCancion Nombre de la canción a buscar
-     * @return Ruta del archivo o null si no se encuentra
+     * Busca la ruta de una canción por su nombre.
      */
     public String getRutaCancion(String nombreCancion) {
         Nodo temp = cabeza;
@@ -84,54 +69,53 @@ public class ListaReproduccion implements Serializable {
         return null;
     }
 
-    /* ***********************
-     * MANIPULACIÓN DE NODOS
-     * ***********************/
-    /**
-     * Agrega una nueva canción al final de la lista
-     *
-     * @param nombreCancion Nombre de la canción
-     * @param rutaCancion Ruta del archivo de audio
-     */
-public void agregarCancion(String nombreCancion, String rutaCancion) {
-    Nodo nuevoNodo = new Nodo(nombreCancion, rutaCancion);
-    if (cabeza == null) {
-        cabeza = nuevoNodo;
-    } else {
-        Nodo temp = cabeza;
-        while (temp.getSiguiente() != null) {
-            temp = temp.getSiguiente();
-        }
-        temp.setSiguiente(nuevoNodo);
-        nuevoNodo.setAnterior(temp);
+    public String getRutaPorNombre(String nombreCancion) {
+        return getRutaCancion(nombreCancion);
     }
-}
 
     /**
-     * Elimina una canción de la lista
-     *
-     * @param nombre Nombre de la canción a eliminar
-     * @return true si se eliminó, false si no se encontró
+     * Vacía la lista por completo.
+     */
+    public void vaciarLista() {
+        cabeza = null;
+    }
+
+    /* ========================
+     *  MANIPULACIÓN DE CANCIONES
+     * ======================== */
+
+    /**
+     * Agrega una nueva canción al final de la lista.
+     */
+    public void agregarCancion(String nombreCancion, String rutaCancion) {
+        Nodo nuevoNodo = new Nodo(nombreCancion, rutaCancion);
+        if (cabeza == null) {
+            cabeza = nuevoNodo;
+        } else {
+            Nodo temp = cabeza;
+            while (temp.getSiguiente() != null) {
+                temp = temp.getSiguiente();
+            }
+            temp.setSiguiente(nuevoNodo);
+            nuevoNodo.setAnterior(temp);
+        }
+    }
+
+    /**
+     * Elimina una canción por su nombre.
      */
     public boolean eliminarCancion(String nombre) {
-        if (vacia()) {
-            return false;
-        }
+        if (vacia()) return false;
 
         Nodo actual = cabeza;
         while (actual != null) {
             if (nombre.equals(actual.getNombreCancion())) {
-                // Caso 1: Es el primer nodo
-                if (cabeza == actual) {
-                    cabeza = cabeza.getSiguiente();
-                    if (cabeza != null) {
-                        cabeza.setAnterior(null);
-                    }
-                } // Caso 2: Es el último nodo
-                else if (actual.getSiguiente() == null) {
+                if (actual == cabeza) {
+                    cabeza = actual.getSiguiente();
+                    if (cabeza != null) cabeza.setAnterior(null);
+                } else if (actual.getSiguiente() == null) {
                     actual.getAnterior().setSiguiente(null);
-                } // Caso 3: Nodo intermedio
-                else {
+                } else {
                     actual.getAnterior().setSiguiente(actual.getSiguiente());
                     actual.getSiguiente().setAnterior(actual.getAnterior());
                 }
@@ -141,26 +125,28 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         }
         return false;
     }
+
     /**
-     * Vacía completamente la lista de reproducción
+     * Cuenta el número total de canciones en la lista.
      */
-    public void vaciarLista() {
-        cabeza = null;
+    public int contarCanciones() {
+        int res = 0;
+        Nodo ac = cabeza;
+        while (ac != null) {
+            res++;
+            ac = ac.getSiguiente();
+        }
+        return res;
     }
 
-    /* ***********************
-     * NAVEGACIÓN ENTRE CANCIONES
-     * ***********************/
-    /**
-     * Obtiene la siguiente canción en la lista
-     *
-     * @param nombreCancionActual Canción de referencia
-     * @return Nombre de la siguiente canción o null si es la última
-     */
-    public String getSiguienteCancion(String nombreCancionActual) {
+    /* ========================
+     *  NAVEGACIÓN
+     * ======================== */
+
+    public String getSiguienteCancion(String nombreActual) {
         Nodo temp = cabeza;
         while (temp != null) {
-            if (temp.getNombreCancion().equals(nombreCancionActual)) {
+            if (temp.getNombreCancion().equals(nombreActual)) {
                 return (temp.getSiguiente() != null) ? temp.getSiguiente().getNombreCancion() : null;
             }
             temp = temp.getSiguiente();
@@ -168,16 +154,10 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         return null;
     }
 
-    /**
-     * Obtiene la canción anterior en la lista
-     *
-     * @param nombreCancionActual Canción de referencia
-     * @return Nombre de la canción anterior o null si es la primera
-     */
-    public String getCancionAnterior(String nombreCancionActual) {
+    public String getCancionAnterior(String nombreActual) {
         Nodo temp = cabeza;
         while (temp != null) {
-            if (temp.getNombreCancion().equals(nombreCancionActual)) {
+            if (temp.getNombreCancion().equals(nombreActual)) {
                 return (temp.getAnterior() != null) ? temp.getAnterior().getNombreCancion() : null;
             }
             temp = temp.getSiguiente();
@@ -185,17 +165,8 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         return null;
     }
 
-    /**
-     * Obtiene la última canción de la lista
-     *
-     * @param nombreCancionActual Parámetro no usado (podría eliminarse)
-     * @return Nombre de la última canción o null si está vacía
-     */
     public String getUltimaCancion(String nombreCancionActual) {
-        if (vacia()) {
-            return null;
-        }
-
+        if (vacia()) return null;
         Nodo temp = cabeza;
         while (temp.getSiguiente() != null) {
             temp = temp.getSiguiente();
@@ -203,63 +174,33 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         return temp.getNombreCancion();
     }
 
-    public String getRutaPorNombre(String nombreCancion) {
-        Nodo temp = cabeza;
-        while (temp != null) {
-            if (temp.getNombreCancion().equals(nombreCancion)) {
-                return temp.getRutaCancion();
-            }
-            temp = temp.getSiguiente();
-        }
-        return null;
-    }
+    /* ========================
+     *  ORDENAMIENTO
+     * ======================== */
 
-    /* ***********************
-     * MÉTODOS DE ORDENACIÓN
-     * ***********************/
-    /**
-     * Ordena las canciones alfabéticamente (A-Z)
-     */
     public void ordenAlfabetico() {
         ordenarPorCriterio(Comparator.comparing(Nodo::getNombreCancion, String.CASE_INSENSITIVE_ORDER));
     }
 
-    /**
-     * Ordena las canciones por formato (extensión de archivo)
-     */
     public void ordenFormato() {
         ordenarPorCriterio((a, b) -> {
-            String formatoA = a.getRutaCancion().substring(a.getRutaCancion().lastIndexOf('.') + 1);
-            String formatoB = b.getRutaCancion().substring(b.getRutaCancion().lastIndexOf('.') + 1);
-            return formatoA.compareToIgnoreCase(formatoB);
+            String extA = a.getRutaCancion().substring(a.getRutaCancion().lastIndexOf('.') + 1);
+            String extB = b.getRutaCancion().substring(b.getRutaCancion().lastIndexOf('.') + 1);
+            return extA.compareToIgnoreCase(extB);
         });
     }
 
-    /**
-     * Ordena las canciones por artista (usando metadatos)
-     */
     public void ordenArtista() {
         ordenarPorCriterio((a, b) -> obtenerArtista(a).compareToIgnoreCase(obtenerArtista(b)));
     }
 
-    /**
-     * Ordena las canciones por duración
-     */
     public void ordenDuracion() {
         ordenarPorCriterio(Comparator.comparingInt(this::obtenerDuracion));
     }
 
-    /**
-     * Método genérico para ordenar la lista según un criterio
-     *
-     * @param criterio Comparator que define el orden
-     */
     private void ordenarPorCriterio(Comparator<Nodo> criterio) {
-        if (vacia()) {
-            return;
-        }
+        if (vacia()) return;
 
-        // Convertir lista enlazada a ArrayList para ordenar
         List<Nodo> nodos = new ArrayList<>();
         Nodo actual = cabeza;
         while (actual != null) {
@@ -271,11 +212,6 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         reconstruirLista(nodos);
     }
 
-    /**
-     * Reconstruye la lista enlazada después de ordenar
-     *
-     * @param nodos Lista de nodos ordenados
-     */
     private void reconstruirLista(List<Nodo> nodos) {
         cabeza = nodos.get(0);
         cabeza.setAnterior(null);
@@ -286,91 +222,16 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         }
         nodos.get(nodos.size() - 1).setSiguiente(null);
     }
-    
-    /* ***********************
-     * Mover la cancion a donde se desee
-     * ***********************/
-    
-    /* ***********************
-     * MANEJO DE METADATOS
-     * ***********************/
-    /**
-     * Obtiene el artista de una canción (metadatos)
-     *
-     * @param nodo Nodo que contiene la canción
-     * @return Nombre del artista o "Desconocido" si no está disponible
-     */
-    private String obtenerArtista(Nodo nodo) {
-        try {
-            AudioFile audioFile = AudioFileIO.read(new File(nodo.getRutaCancion()));
-            return audioFile.getTag().getFirst(FieldKey.ARTIST);
-        } catch (Exception e) {
-            return "Desconocido";
-        }
-    }
 
     /**
-     * Obtiene la duración de una canción en segundos (metadatos)
-     *
-     * @param nodo Nodo que contiene la canción
-     * @return Duración en segundos o 0 si no está disponible
-     */
-    private int obtenerDuracion(Nodo nodo) {
-        try {
-            AudioFile audioFile = AudioFileIO.read(new File(nodo.getRutaCancion()));
-            return audioFile.getAudioHeader().getTrackLength();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Obtiene el artista de una canción (versión pública)
-     *
-     * @param ruta Ruta del archivo de audio
-     * @return Nombre del artista o "Desconocido" si no está disponible
-     */
-    public String obtenerArtistaLegible(String ruta) {
-        try {
-            AudioFile audioFile = AudioFileIO.read(new File(ruta));
-            String artista = audioFile.getTag().getFirst(FieldKey.ARTIST);
-            return (artista != null && !artista.trim().isEmpty()) ? artista : "Desconocido";
-        } catch (Exception e) {
-            return "Desconocido";
-        }
-    }
-
-    /**
-     * Obtiene la duración formateada (MM:SS) de una canción
-     *
-     * @param rutaCancion Ruta del archivo de audio
-     * @return String con formato MM:SS o "0:00" si hay error
-     */
-    public String obtenerDuracionLegible(String rutaCancion) {
-        try {
-            AudioFile audioFile = AudioFileIO.read(new File(rutaCancion));
-            int duracionSegundos = audioFile.getAudioHeader().getTrackLength();
-            return String.format("%d:%02d", duracionSegundos / 60, duracionSegundos % 60);
-        } catch (Exception e) {
-            System.err.println("Error al obtener duración de: " + rutaCancion + " - " + e.getMessage());
-            return "0:00";
-        }
-    }
-
-    /* ***********************
-     * OPERACIONES AVANZADAS
-     * ***********************/
-    /**
-     * Invierte el orden de la lista
+     * Invierte el orden de la lista.
      */
     public void invertirLista() {
-        if (vacia() || cabeza.getSiguiente() == null) {
-            return;
-        }
+        if (vacia() || cabeza.getSiguiente() == null) return;
 
         Nodo actual = cabeza;
         Nodo previo = null;
-        Nodo siguiente = null;
+        Nodo siguiente;
 
         while (actual != null) {
             siguiente = actual.getSiguiente();
@@ -381,41 +242,72 @@ public void agregarCancion(String nombreCancion, String rutaCancion) {
         }
         cabeza = previo;
     }
-    
-    //anghelo
-      private List<Cancion> canciones;
 
-public List<Cancion> getCanciones() {
-    return canciones;
-}
+    /* ========================
+     *  METADATOS
+     * ======================== */
+
+    private String obtenerArtista(Nodo nodo) {
+        try {
+            AudioFile audioFile = AudioFileIO.read(new File(nodo.getRutaCancion()));
+            return audioFile.getTag().getFirst(FieldKey.ARTIST);
+        } catch (Exception e) {
+            return "Desconocido";
+        }
+    }
+
+    private int obtenerDuracion(Nodo nodo) {
+        try {
+            AudioFile audioFile = AudioFileIO.read(new File(nodo.getRutaCancion()));
+            return audioFile.getAudioHeader().getTrackLength();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public String obtenerArtistaLegible(String ruta) {
+        try {
+            AudioFile audioFile = AudioFileIO.read(new File(ruta));
+            String artista = audioFile.getTag().getFirst(FieldKey.ARTIST);
+            return (artista != null && !artista.trim().isEmpty()) ? artista : "Desconocido";
+        } catch (Exception e) {
+            return "Desconocido";
+        }
+    }
+
+    public String obtenerDuracionLegible(String rutaCancion) {
+        try {
+            AudioFile audioFile = AudioFileIO.read(new File(rutaCancion));
+            int segundos = audioFile.getAudioHeader().getTrackLength();
+            return String.format("%d:%02d", segundos / 60, segundos % 60);
+        } catch (Exception e) {
+            System.err.println("Error al obtener duración: " + e.getMessage());
+            return "0:00";
+        }
+    }
+
+    /**
+     * Obtiene la imagen de portada de una canción.
+     */
 public Image obtenerPortada(String ruta) {
     try {
-        File archivo = new File(ruta);                             // Crear archivo a partir de la ruta
-        AudioFile audioFile = AudioFileIO.read(archivo);           // Leer metadatos del archivo
-        Tag tag = audioFile.getTag();                              // Obtener las etiquetas (tags)
-
-        if (tag != null && tag.getFirstArtwork() != null) {        // Verificar si hay portada
-            Artwork artwork = tag.getFirstArtwork();               // Obtener la portada
-            byte[] imagenBytes = artwork.getBinaryData();          // Obtener los datos binarios
-            Image portada = new Image(new ByteArrayInputStream(imagenBytes)); // Convertir a Image
-            return portada;                                        // Devolver la portada
-        } else {
-            return null;                                           // No hay portada
+        AudioFile audioFile = AudioFileIO.read(new File(ruta));
+        Tag tag = audioFile.getTag();
+        if (tag != null && tag.getFirstArtwork() != null) {
+            byte[] imagen = tag.getFirstArtwork().getBinaryData();
+            return new Image(new ByteArrayInputStream(imagen));
         }
     } catch (Exception e) {
-        System.out.println("Error al cargar portada: " + e.getMessage());
-        return null;                                               // En caso de error, devolver null
+        e.printStackTrace();
     }
+    return null; // Imagen por defecto si falla
 }
-public int contarCanciones(){
-    int res=0;
-        if (!vacia()){
-            Nodo ac = cabeza;
-            while (ac!=null){
-                res=res+1;
-                ac=ac.getSiguiente();
-            }
-        }
-    return res;
-}
+
+    /* ========================
+     *  ACCESOR ADICIONAL
+     * ======================== */
+
+    public List<Cancion> getCanciones() {
+        return canciones;
+    }
 }

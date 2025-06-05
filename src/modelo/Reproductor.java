@@ -5,6 +5,7 @@ package modelo;
  * Maneja la creación del MediaPlayer, control de reproducción, temporización
  * y propiedades observables para la interfaz de usuario.
  */
+
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
@@ -28,31 +29,31 @@ import javafx.beans.property.SimpleDoubleProperty;
  */
 public class Reproductor {
 
-    // Componentes de reproducción
-    private MediaPlayer mediaPlayer;      // Reproductor de medios de JavaFX
-    private String rutaActual;            // Ruta del archivo actualmente en reproducción
-    private Timeline timelineTemporizador; // Temporizador para actualizar la UI
-    private boolean repetirUna = false;    //Switch de repeticion una cancion
-    // Propiedades observables para la UI
+    // Reproducción
+    private MediaPlayer mediaPlayer;                  // Reproductor de JavaFX
+    private String rutaActual;                        // Ruta del archivo actual
+    private Timeline timelineTemporizador;            // Temporizador para actualizar UI
+    private boolean repetirUna = false;               // Modo repetición
+
+    // Propiedades para la UI
     private final StringProperty tiempoTranscurrido = new SimpleStringProperty("00:00");
-    private final StringProperty tiempoTotal = new SimpleStringProperty("00:00");
-    
-    // Configuración de audio
-    private double ultimoVolumen = 1.0;   // Volumen actual (0.0 a 1.0)
+    private final StringProperty tiempoTotal       = new SimpleStringProperty("00:00");
+
+    // Volumen
+    private double ultimoVolumen                    = 1.0;
     private final SimpleDoubleProperty volumenProperty = new SimpleDoubleProperty(ultimoVolumen);
-    private Runnable onEndOfMediaHandler;  //maneja el evento de finalizacion de cancion
-    /* ***********************
-     * CONSTRUCTOR E INICIALIZACIÓN
-     * ***********************/
+
+    // Manejador de fin de canción
+    private Runnable onEndOfMediaHandler;
 
     /**
-     * Constructor - Inicializa el reproductor y el temporizador.
+     * Constructor - Inicializa volumen y temporizador.
      */
     public Reproductor() {
-        this.ultimoVolumen = 1.0;
         this.volumenProperty.set(1.0);
         inicializarTemporizador();
-        
+
+        // Escucha cambios en el volumen
         volumenProperty.addListener((obs, oldVal, newVal) -> {
             this.ultimoVolumen = newVal.doubleValue();
             if (mediaPlayer != null) {
@@ -62,21 +63,17 @@ public class Reproductor {
     }
 
     /**
-     * Configura el temporizador para actualizar los tiempos de reproducción.
+     * Inicializa el temporizador para actualizar el tiempo cada segundo.
      */
     private void inicializarTemporizador() {
         timelineTemporizador = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> actualizarTiempo())
+            new KeyFrame(Duration.seconds(1), e -> actualizarTiempo())
         );
         timelineTemporizador.setCycleCount(Animation.INDEFINITE);
     }
 
-    /* ***********************
-     * MANEJO DE TIEMPOS
-     * ***********************/
-
     /**
-     * Actualiza las propiedades de tiempo para la UI.
+     * Actualiza el tiempo transcurrido y total en la interfaz.
      */
     private void actualizarTiempo() {
         if (mediaPlayer != null) {
@@ -86,71 +83,48 @@ public class Reproductor {
     }
 
     /**
-     * Formatea una duración a formato MM:SS.
+     * Convierte una duración a formato MM:SS.
      * @param tiempo Duración a formatear
-     * @return String con el tiempo formateado
+     * @return Cadena con formato MM:SS
      */
     public String formatearTiempo(Duration tiempo) {
-        if (tiempo == null || tiempo.isUnknown()) {
-            return "0:00";
-        }
+        if (tiempo == null || tiempo.isUnknown()) return "0:00";
 
         long segundosTotales = (long) Math.floor(tiempo.toSeconds());
-        long minutos = segundosTotales / 60;
-        long segundos = segundosTotales % 60;
+        long minutos         = segundosTotales / 60;
+        long segundos        = segundosTotales % 60;
 
         return String.format("%d:%02d", minutos, segundos);
     }
 
     /**
-     * Obtiene la duración formateada como string 
-     * @return 00:00 si n hay duracion y "3:15" en string que es la duracion de la cancion
+     * Obtiene la duración total del audio formateada.
+     * @return Cadena con formato MM:SS
      */
     public String getDuracionFormateada() {
-        if (mediaPlayer != null && mediaPlayer.getTotalDuration() != null) {
-            return formatearTiempo(mediaPlayer.getTotalDuration());
-        }
-        return "00:00";
+        return (mediaPlayer != null && mediaPlayer.getTotalDuration() != null)
+            ? formatearTiempo(mediaPlayer.getTotalDuration())
+            : "00:00";
     }
 
     /**
-     * Reinicia completamente los tiempos
+     * Reinicia los tiempos mostrados en la interfaz.
      */
-/**
- * Reinicia los tiempos mostrados en la interfaz
- */
-public void reiniciarTiempos() {
-    tiempoTranscurrido.set("00:00");
-    tiempoTotal.set("00:00");
-}
-    
-    /* ***********************
-     * PROPIEDADES PARA LA UI
-     * ***********************/
-
-    /**
-     * Obtiene la propiedad observable del tiempo transcurrido.
-     * @return StringProperty con formato MM:SS
-     */
-    public StringProperty tiempoTranscurridoProperty() {
-        return tiempoTranscurrido;
+    public void reiniciarTiempos() {
+        tiempoTranscurrido.set("00:00");
+        tiempoTotal.set("00:00");
     }
 
-    /**
-     * Obtiene la propiedad observable del tiempo total.
-     * @return StringProperty con formato MM:SS
-     */
-    public StringProperty tiempoTotalProperty() {
-        return tiempoTotal;
-    }
+    // ======== PROPIEDADES OBSERVABLES ========
 
-    /* ***********************
-     * CONTROL DE REPRODUCCIÓN
-     * ***********************/
+    public StringProperty tiempoTranscurridoProperty() { return tiempoTranscurrido; }
+    public StringProperty tiempoTotalProperty()       { return tiempoTotal; }
+
+    // ======== CONTROL DE REPRODUCCIÓN ========
 
     /**
-     * Reproduce un archivo de audio.
-     * @param rutaCancion Ruta absoluta del archivo a reproducir
+     * Reproduce una canción especificada por su ruta.
+     * @param rutaCancion Ruta absoluta del archivo
      */
     public void reproducir(String rutaCancion) {
         if (mediaPlayer != null && rutaCancion.equals(rutaActual)
@@ -161,55 +135,42 @@ public void reiniciarTiempos() {
         detener();
 
         try {
-            Media archivoAudio = new Media(new File(rutaCancion).toURI().toString());
-            mediaPlayer = new MediaPlayer(archivoAudio);
-            rutaActual = rutaCancion;
-
+            Media media = new Media(new File(rutaCancion).toURI().toString());
+            mediaPlayer = new MediaPlayer(media);
+            rutaActual  = rutaCancion;
 
             mediaPlayer.setVolume(volumenProperty.get());
 
             mediaPlayer.setOnReady(() -> {
                 tiempoTranscurrido.set("00:00");
-                System.out.println(mediaPlayer.getTotalDuration());
                 tiempoTotal.set(formatearTiempo(mediaPlayer.getTotalDuration()));
-                System.out.println(tiempoTotal);
                 timelineTemporizador.play();
                 mediaPlayer.play();
             });
 
-            // Configuración clave para el cambio automático de canción
-            mediaPlayer.setOnEndOfMedia(() -> {
-                Platform.runLater(() -> {
-                    if (!repetirUna) {
-                        // Notificar al controlador para cambiar de canción
-                        if (onEndOfMediaHandler != null) {
-                            onEndOfMediaHandler.run();
-                        }
-                    }else{
-                        reiniciarReproduccion();
-                    }
-                });
-            });
+            mediaPlayer.setOnEndOfMedia(() -> Platform.runLater(() -> {
+                if (!repetirUna) {
+                    if (onEndOfMediaHandler != null) onEndOfMediaHandler.run();
+                } else {
+                    reiniciarReproduccion();
+                }
+            }));
 
         } catch (Exception e) {
-            System.err.println("Error al reproducir el archivo: " + e.getMessage());
+            System.err.println("Error al reproducir: " + e.getMessage());
         }
     }
 
-     /**
-     * Establece un manejador (handler) que se ejecutará cuando el medio (audio) 
-     * llegue al final de su reproducción.
-     * 
-     * @param handler Objeto Runnable que contiene la lógica a ejecutar al finalizar el medio.
-     *                Puede ser una lambda, una referencia a método o una clase que implemente Runnable.
-     *                Ejemplo: () -> System.out.println("Reproducción finalizada");
+    /**
+     * Establece un manejador para cuando finalice la reproducción.
+     * @param handler Acción a ejecutar
      */
     public void setOnEndOfMedia(Runnable handler) {
         this.onEndOfMediaHandler = handler;
     }
 
     /**
-     * Pausa la reproducción actual.
+     * Pausa la reproducción.
      */
     public void pausar() {
         if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
@@ -219,38 +180,41 @@ public void reiniciarTiempos() {
     }
 
     /**
-     * Reanuda la reproducción pausada.
+     * Reanuda la reproducción si está pausada o detenida.
      */
-public void reanudar() {
-    if (mediaPlayer != null) {
-        if (mediaPlayer.getStatus() == MediaPlayer.Status.PAUSED) {
-            mediaPlayer.play();
-            timelineTemporizador.play();
-        } else if (mediaPlayer.getStatus() == MediaPlayer.Status.STOPPED || mediaPlayer.getStatus() == MediaPlayer.Status.READY) {
-            // Si se detuvo pero queremos reanudar, empezamos desde la posición guardada
-            mediaPlayer.seek(Duration.millis(mediaPlayer.getCurrentTime().toMillis()));
-            mediaPlayer.play();
-            timelineTemporizador.play();
+    public void reanudar() {
+        if (mediaPlayer != null) {
+            switch (mediaPlayer.getStatus()) {
+                case PAUSED:
+                    mediaPlayer.play();
+                    timelineTemporizador.play();
+                    break;
+                case STOPPED:
+                case READY:
+                    mediaPlayer.seek(mediaPlayer.getCurrentTime());
+                    mediaPlayer.play();
+                    timelineTemporizador.play();
+                    break;
+            }
         }
     }
-}
 
-/**
- * Detiene la reproducción y limpia todos los recursos
- */
-public void detener() {
-    if (mediaPlayer != null) {
-        timelineTemporizador.stop();
-        mediaPlayer.stop();
-        mediaPlayer.dispose();
-        mediaPlayer = null;
-        rutaActual = null;
-        tiempoTranscurrido.set("00:00");
-        tiempoTotal.set("00:00");
+    /**
+     * Detiene la reproducción y libera recursos.
+     */
+    public void detener() {
+        if (mediaPlayer != null) {
+            timelineTemporizador.stop();
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+            mediaPlayer = null;
+            rutaActual  = null;
+            reiniciarTiempos();
+        }
     }
-}
-/**
-     * hace que el media se reinicie util para mejorar la optimizacion
+
+    /**
+     * Reinicia la reproducción desde el inicio.
      */
     public void reiniciarReproduccion() {
         if (mediaPlayer != null) {
@@ -259,14 +223,8 @@ public void detener() {
         }
     }
 
-    /* ***********************
-    * CONTROL DE REPETICIÓN
-    * ***********************/
+    // ======== MODO REPETICIÓN ========
 
-    /**
-     * Activa/desactiva el modo de repetición para una canción
-     * @param repetir true para activar repetición, false para desactivar
-     */
     public void setModoRepeticion(boolean repetir) {
         this.repetirUna = repetir;
         if (mediaPlayer != null) {
@@ -274,52 +232,35 @@ public void detener() {
         }
     }
 
-    /**
-     * Verifica si el modo repetición está activado
-     * @return true si está activado, false si no
-     */
     public boolean isModoRepeticionActivo() {
         return repetirUna;
     }
-    
-    /* ***********************
-     * CONFIGURACIÓN DE AUDIO
-     * ***********************/
 
-        
-    /**
-     * Obtiene la propiedad observable del volumen
-     * @return propiedad de volumen
-     */
+    public boolean getModoRepeticion() {
+        return repetirUna;
+    }
+
+    // ======== CONFIGURACIÓN DE AUDIO ========
+
     public DoubleProperty volumenProperty() {
         return volumenProperty;
     }
-    
-    /**
-     * Obtiene el volumen actual
-     * @return el volumen actual
-     */
+
     public double getVolumenActual() {
         return volumenProperty.get();
     }
-    
-    /**
-     * Establece el volumen de reproducción.
-     *
-     * @param volumen Valor entre 0.0 (silencio) y 1.0 (máximo)
-     */
+
     public void setVolumen(double volumen) {
         this.ultimoVolumen = volumen;
-        this.volumenProperty.set(volumen);
+        volumenProperty.set(volumen);
         if (mediaPlayer != null) {
             mediaPlayer.setVolume(volumen);
         }
     }
-    
+
     /**
-     * Establece la posición de reproducción
-     *
-     * @param duracion La nueva posición deseada
+     * Establece una posición específica de reproducción.
+     * @param duracion Nueva posición
      */
     public void setPosicion(Duration duracion) {
         if (mediaPlayer != null && duracion != null) {
@@ -327,51 +268,25 @@ public void detener() {
         }
     }
 
-    /* ***********************
-     * MÉTODOS DE CONSULTA
-     * ***********************/
+    // ======== MÉTODOS DE CONSULTA ========
 
-    /**
-     * Obtiene el MediaPlayer actual.
-     * @return Instancia del MediaPlayer o null si no hay reproducción
-     */
     public MediaPlayer getMediaPlayer() {
-        return this.mediaPlayer;
+        return mediaPlayer;
     }
 
-    /**
-     * Obtiene la duración total del audio actual.
-     * @return Duración o null si no hay reproducción
-     */
     public Duration getDuracion() {
         return (mediaPlayer != null) ? mediaPlayer.getTotalDuration() : null;
     }
 
-    /**
-     * Obtiene el tiempo actual de reproducción.
-     * @return Tiempo actual o null si no hay reproducción
-     */
     public Duration getTiempoActual() {
         return (mediaPlayer != null) ? mediaPlayer.getCurrentTime() : null;
     }
 
-    /**
-     * Calcula el progreso de reproducción (0.0 a 1.0).
-     * @return Progreso entre 0 (inicio) y 1 (fin)
-     */
     public double getProgreso() {
         if (mediaPlayer != null && !mediaPlayer.getTotalDuration().isUnknown()) {
             return mediaPlayer.getCurrentTime().toMillis() / 
                    mediaPlayer.getTotalDuration().toMillis();
         }
         return 0;
-    }
-    
-    /**
-     * Obtiene el estado actual del modo repetición
-     * @return true si está activado, false si no
-     */
-    public boolean getModoRepeticion() {
-        return repetirUna;
     }
 }
